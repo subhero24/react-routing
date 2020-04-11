@@ -312,7 +312,7 @@ After your data is fetched, rendering will resume and the transition to the new 
 Sometimes a `navigate` to a new location does not happen immediately.
 When data is not yet ready or the component suspends for some other reason, the router will wait for the component, to execute the location change.
 To know if a location change is pending in the background, there is a `usePending` hook.
-The suspense transition timeout can be set by a `timeoutMs` prop on the router.
+The suspense transition timeout can be set by a `timeoutMs` prop on the router. The default is 4000ms.
 
 ```javascript
 import React from 'react'

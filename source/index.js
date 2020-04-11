@@ -24,7 +24,7 @@ export default function Routes(...args) {
 	component = createRouteComponent(routes, path, base);
 
 	return function Router(props) {
-		let { timeoutMs = 8000 } = props;
+		let { timeoutMs = 4000 } = props;
 
 		let [action, setAction] = useState();
 		let [mounted, setMounted] = useState(false);
