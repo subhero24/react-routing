@@ -346,12 +346,12 @@ const ApplicationRouter = Router(
 )
 
 const Application = () => {
-  <Suspense fallback="loading...">
+  return <Suspense fallback="loading...">
     <ApplicationRouter timeoutMs={5000} />
   </Suspense>
 }
 
-ReactDom.createRoot(document.body).render(<Application >)
+ReactDom.createRoot(document.body).render(<Application />)
 ```
 
 ## Router options
