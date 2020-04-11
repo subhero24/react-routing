@@ -40,5 +40,5 @@ export default function routeComponent(routes, path, base = '/') {
 		}
 	}
 
-	return undefined;
+	return () => null;
 }
