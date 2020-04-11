@@ -203,7 +203,7 @@ function Admin(props) {
     <div>
       <Menu>
         <Menuitem selected={section === 'posts'}>Posts</Menuitem>
-        <Menuitem selected={section === 'topics'}>Posts</Menuitem>
+        <Menuitem selected={section === 'topics'}>Topics</Menuitem>
       </Menu>
       <section>{props.children}</section>
     </div>
@@ -304,7 +304,7 @@ function Post() {
 }
 ```
 
-If your data is still pending, `useData` will suspend the transition to the the route.
+If your data is still pending, `useData` will suspend the transition to the route.
 After your data is fetched, rendering will resume and the transition to the new location will complete.
 
 ## Suspense
