@@ -1,0 +1,24 @@
+{
+	"name": "react-sprout",
+	"version": "0.0.1",
+	"description": "A suspense ready react router",
+	"main": "index.js",
+	"directories": {
+		"doc": "doc",
+		"test": "test"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"react",
+		"router",
+		"sprout",
+		"suspense"
+	],
+	"author": "Bruno Van Damme",
+	"license": "MIT",
+	"devDependencies": {
+		"@babel/core": "^7.9.0"
+	}
+}
