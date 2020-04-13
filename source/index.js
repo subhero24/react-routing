@@ -7,21 +7,21 @@ import LocationContext from './contexts/location';
 import { useRef, useMemo, useState, useEffect, useTransition, useLayoutEffect } from 'react';
 
 import preprocessRoutes from './utils/routes/preprocess';
-import createRouteComponent from './utils/routes/route-component';
+import createRouteElement from './utils/routes/route-element';
 
 const POP = 'POP';
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
 export default function Routes(...args) {
+	let route;
 	let routes = args.pop() ?? [];
 	let options = args.pop() ?? {};
-	let component;
 
 	let { path = window.location.pathname + window.location.search + window.location.hash, base = '/' } = options;
 
 	routes = preprocessRoutes(routes);
-	component = createRouteComponent(routes, path, base);
+	route = createRouteElement(routes, path, base);
 
 	return function Router(props) {
 		let { timeoutMs = 4000 } = props;
@@ -35,9 +35,7 @@ export default function Routes(...args) {
 		let [historyLength, setHistoryLength] = useState(window.history.length);
 		let [documentTitle, setDocumentTitle] = useState(window.document.title);
 
-		// The Component useState and subsequent SetComponents needs to do set the state
-		// with a function, because the component itself could be a function component
-		let [Component, setComponent] = useState(() => component);
+		let [element, setElement] = useState(route);
 
 		let location = useMemo(() => {
 			return new URL(locationPath, window.location.origin);
@@ -68,8 +66,8 @@ export default function Routes(...args) {
 
 						let target = Path.resolve(locationPath, `${path}`);
 						if (target !== locationPath) {
-							let component = createRouteComponent(routes, target, base);
-							setComponent(() => component);
+							let element = createRouteElement(routes, target, base);
+							setElement(element);
 							setLocationPath(target);
 						}
 					});
@@ -105,8 +103,8 @@ export default function Routes(...args) {
 
 				let path = window.location.pathname + window.location.search + window.location.hash;
 				if (path !== locationPathRef.current) {
-					let component = createRouteComponent(routes, path, '/');
-					setComponent(() => component);
+					let element = createRouteElement(routes, path, '/');
+					setElement(element);
 					setLocationPath(path);
 				}
 			}
@@ -141,9 +139,7 @@ export default function Routes(...args) {
 		return (
 			<LocationContext.Provider value={location}>
 				<HistoryContext.Provider value={history}>
-					<PendingContext.Provider value={pending}>
-						<Component />
-					</PendingContext.Provider>
+					<PendingContext.Provider value={pending}>{element}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);
