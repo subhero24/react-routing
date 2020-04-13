@@ -132,8 +132,9 @@ export default function Routes(...args) {
 			};
 		}, []);
 
-		// Update history length state if render did access history length
 		// eslint-disable-next-line react-hooks/exhaustive-deps
+		// Update history length state because we could not know it in advance
+		// as a popstate could be fired to a history item in the middle of the stack
 		useLayoutEffect(() => {
 			setHistoryLength(window.history.length);
 		});
@@ -149,7 +150,7 @@ export default function Routes(...args) {
 
 		// Do not render children before subscribed to popstate event
 		// as a child could navigate in its useEffect on mount, and this will
-		// be executed before this effect
+		// be executed before the popstate subscription effect
 		if (!mounted) return null;
 
 		return (
