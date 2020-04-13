@@ -45,23 +45,23 @@ export default function Routes(...args) {
 
 		let history = useMemo(() => {
 			return {
-				go: function(delta) {
+				go: function (delta) {
 					window.history.go(delta);
 				},
-				back: function() {
+				back: function () {
 					window.history.back();
 				},
-				forward: function() {
+				forward: function () {
 					window.history.forward();
 				},
-				pushState: function(state, title, path = '.') {
+				pushState: function (state, title, path = '.') {
 					this.navigate(`${path}`, { state, title, replace: false });
 				},
-				replaceState: function(state, title, path = '.') {
+				replaceState: function (state, title, path = '.') {
 					this.navigate(`${path}`, { state, title, replace: true });
 				},
-				navigate: function(path, options = {}) {
-					transition(function() {
+				navigate: function (path, options = {}) {
+					transition(function () {
 						setAction(options.replace ? REPLACE : PUSH);
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
@@ -127,7 +127,7 @@ export default function Routes(...args) {
 
 			setMounted(true);
 			addEventListener('popstate', handler);
-			return function() {
+			return function () {
 				removeEventListener('popstate', handler);
 			};
 		}, []);
