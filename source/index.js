@@ -132,12 +132,11 @@ export default function Routes(...args) {
 			};
 		}, []);
 
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		// Update history length state because we could not know it in advance
 		// as a popstate could be fired to a history item in the middle of the stack
 		useLayoutEffect(() => {
 			setHistoryLength(window.history.length);
-		});
+		}, [setHistoryLength]);
 
 		// If component did render with updated location/history, update the browsers history
 		useLayoutEffect(() => {
