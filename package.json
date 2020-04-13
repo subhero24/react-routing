@@ -3,6 +3,7 @@
 	"version": "0.0.1",
 	"description": "A suspense ready react router",
 	"main": "index.js",
+	"source": "index.js",
 	"directories": {
 		"doc": "doc",
 		"test": "test"
@@ -19,6 +20,10 @@
 	"author": "Bruno Van Damme",
 	"license": "MIT",
 	"devDependencies": {
-		"@babel/core": "^7.9.0"
+		"@babel/core": "^7.9.0",
+		"babel-eslint": "^10.1.0",
+		"eslint": "^6.8.0",
+		"eslint-plugin-react": "^7.19.0",
+		"eslint-plugin-react-hooks": "^3.0.0"
 	}
 }
