@@ -24,11 +24,13 @@ export default function Routes(...args) {
 	route = createRouteElement(routes, path, base);
 
 	return function Router(props) {
-		let { timeoutMs = 4000 } = props;
+		let { timeoutMs = 4000, pendingDelayMs = 200, pendingMinimumMs = 500 } = props;
+		let busyMinDurationMs = pendingDelayMs + pendingMinimumMs;
 
 		let [action, setAction] = useState();
 		let [mounted, setMounted] = useState(false);
-		let [transition, pending] = useTransition({ timeoutMs });
+		let [pending, setPending] = useState(false);
+		let [transition, transitioning] = useTransition({ timeoutMs, busyMinDurationMs });
 
 		let [locationPath, setLocationPath] = useState(path);
 		let [historyState, setHistoryState] = useState(window.history.state);
@@ -86,6 +88,20 @@ export default function Routes(...args) {
 				},
 			};
 		}, [locationPath, historyLength, historyState, transition]);
+
+		// Delay pending
+		useEffect(() => {
+			let timeout;
+			if (transitioning) {
+				timeout = setTimeout(function () {
+					setPending(true);
+				}, pendingDelayMs);
+			}
+			return function () {
+				setPending(false);
+				clearTimeout(timeout);
+			};
+		}, [transitioning, pendingDelayMs]);
 
 		// Latest location is needed in popstate handler, which we only want to add as an event listener once
 		let locationPathRef = useRef();
