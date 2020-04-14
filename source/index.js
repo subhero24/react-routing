@@ -135,7 +135,7 @@ export default function Routes(...args) {
 			}
 		}, [action, historyState, documentTitle, locationPath]);
 
-		// Do not render children before subscribed to popstate event
+		// Do not render children before subscription to popstate event
 		// as a child could navigate in its useEffect on mount, and this will
 		// be executed before the popstate subscription effect
 		if (!mounted) return null;
