@@ -57,10 +57,10 @@ export default function Routes(...args) {
 					window.history.forward();
 				},
 				pushState: function (state, title, path = '.') {
-					this.navigate(`${path}`, { state, title, replace: false });
+					this.navigate(path, { state, title, replace: false });
 				},
 				replaceState: function (state, title, path = '.') {
-					this.navigate(`${path}`, { state, title, replace: true });
+					this.navigate(path, { state, title, replace: true });
 				},
 				navigate: function (path, options = {}) {
 					transition(function () {
