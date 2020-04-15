@@ -308,7 +308,7 @@ After your data is fetched, rendering will resume and the transition to the new 
 
 ## Suspense
 
-When navigating to a new location with `navigate`, there is a `sticky` option to enable the new location to load in the background. The current location will be kept on the screen, until the data of the new location is loaded. When the new location is ready to be displayed, the navigation will happen and the url will be updated. When using navigation like this, you should show an indicator to your users that the new route is loading in the background. The `usePending` hook returns if a navigation is still pending or not. The maximum amount of time that a navigation stays in the background, can be specified by a `timeoutMs` prop on the router element. The default is 4000ms.
+When navigating to a new location with `navigate`, there is a `sticky` option to enable the new location to load in the background. The current location will be kept on the screen, until the data of the new location is loaded. When the new location is ready to be displayed, the navigation will happen and the url will be updated. When using navigation like this, you should show an indicator to your users that the new route is loading in the background. The `usePending` hook returns whether a navigation is still pending or not. The maximum amount of time that a navigation stays in the background, can be specified by a `timeoutMs` prop on the router element. The default is 4000ms.
 
 ```javascript
 import React from 'react'
@@ -354,7 +354,7 @@ ReactDom.createRoot(document.body).render(<Application />)
 
 When creating the router, you could also pass an options object as the first argument. The following options can be used:
 
--   path: the initial path of the router, defaults to the browser's current location. Can be used for server side rendering, to set the path to the location of the incoming request.
+-   location: the initial location of the router, defaults to the browser's current location. Can be used for server side rendering, to set the path to the location of the incoming request.
 -   base: the part of the location pathname that should not be included in the path matching. Can be used if you want your application in a subroute without changing your router paths.
 
 ## Advanced
@@ -415,7 +415,6 @@ Specifying the path property with a splat, will only match `/component/*`.
 ### useResource
 
 There is a `useData` hook for getting the route data. This will suspend rendering if the data is not ready.
-
 There is also a `useResource` hook which gets the underlying resource for the data, and does not suspend rendering.
 
 If you ever need to give the data of your route to another component, you can pass the resource as a prop. The other component could then access the data with the same `useData` hook, but pass the resource as the first argument.
@@ -424,8 +423,8 @@ If you ever need to give the data of your route to another component, you can pa
 import Router, { Child } from 'react-sprout';
 
 const ApplicationRouter = Router(
-  <ParentComponent path="parent" data={fetchSomeData}>
-    <ChildComponent path="child" data={fetchSomeOtherData} />
+  <ParentComponent path="parent" data={fetchParentData}>
+    <ChildComponent path="child" data={fetchChildData} />
   </ParentCompoent>,
 );
 
@@ -438,21 +437,21 @@ function ParentComponent(props) {
 function ChildComponent(props) {
   let { resource } = props;
 
-  let someData = useData(resource);
-  let someOtherData = useData();
+  let childData = useData();
+  let parentData = useData(resource);
 
   return (
     <div>
-      <span>{someData.prop}</span>
-      <span>{someOtherData.prop}</span>
+      <span>{childData.prop}</span>
+      <span>{parentData.prop}</span>
     </div>
   );
 }
 ```
 
-This method is to be preferred over passing the data itself as a prop, because then the `ParentComponent` should get the data with `useData`. This means the `ParentComponent` suspends and on completion of the data fetching, will pass the data to it's child.
+This method is to be preferred over passing the data itself as a prop, because then the `ParentComponent` must use `useData` to get the data before passing it to it's child. This means the `ParentComponent` suspends rendering and only on completion of the data fetching, will pass the data to it's child.
 
-Passing the resource instead of the data allows the `ParentComponent` to not suspend, but let the `ChildComponent` do the suspending with `useData`. If there is a `<Suspense>` boundary between Parent and Child, it will be used when the child suspends. If the Parent did the suspending, that `<Suspense>` boundary could not have been used.
+Passing the resource instead of the data allows the `ParentComponent` to not suspend, but let the `ChildComponent` do the suspending with `useData`. If there is a `<Suspense>` boundary between Parent and Child, it will be used when the child suspends. If the Parent did the suspending, that `<Suspense>` boundary could not have been activated.
 
 ### Route config
 
