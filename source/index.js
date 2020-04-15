@@ -13,6 +13,19 @@ const POP = 'POP';
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
+// Mock useTransition to support versions without useTransition
+let useCustomTransition = useTransition;
+if (useCustomTransition == undefined) {
+	useCustomTransition = function () {
+		let pending = false;
+		let transition = function (execute) {
+			execute();
+		};
+
+		return [transition, pending];
+	};
+}
+
 export default function Routes(...args) {
 	let route;
 	let routes = args.pop() ?? [];
@@ -32,7 +45,7 @@ export default function Routes(...args) {
 
 		let [action, setAction] = useState();
 		let [mounted, setMounted] = useState(false);
-		let [transition, pending] = useTransition({ timeoutMs });
+		let [transition, pending] = useCustomTransition({ timeoutMs });
 
 		let [locationPath, setLocationPath] = useState(path);
 		let [historyState, setHistoryState] = useState(window.history.state);
