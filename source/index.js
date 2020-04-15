@@ -160,7 +160,7 @@ export default function Routes(...args) {
 		return (
 			<LocationContext.Provider value={location}>
 				<HistoryContext.Provider value={history}>
-					<PendingContext.Provider value={pending}>{element}</PendingContext.Provider>
+					<PendingContext.Provider value={pending}>{routeElement}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);
