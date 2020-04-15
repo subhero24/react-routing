@@ -43,7 +43,7 @@ const ApplicationRouter = Router(
   </ParentComponent>
 )
 
-const Application = () => {
+function Application() {
   <Suspense fallback="loading...">
     <ApplicationRouter />
   </Suspense>
@@ -349,7 +349,7 @@ const ApplicationRouter = Router(
   <Post path="posts/:id" data={fetchPost} />
 )
 
-const Application = () => {
+function Application() {
   return <Suspense fallback="loading...">
     <ApplicationRouter timeoutMs={5000} />
   </Suspense>
