@@ -1,9 +1,10 @@
 import matcherByRegex from '../paths/matcher-by-regex';
 import matcherByFunction from '../paths/matcher-by-function';
+import matcherByUndefined from '../paths/matcher-by-undefined';
 import matcherByDescriptor from '../paths/matcher-by-descriptor';
 
 export default function transformRoutePaths(routes) {
-	return routes.map(function(route) {
+	return routes.map(function (route) {
 		let result = { ...route };
 		if (typeof route.path === 'string') {
 			result.path = matcherByDescriptor(result.path);
@@ -11,6 +12,8 @@ export default function transformRoutePaths(routes) {
 			result.path = matcherByRegex(result.path);
 		} else if (typeof route.path === 'function') {
 			result.path = matcherByFunction(route.path);
+		} else if (route.path == undefined) {
+			result.path = matcherByUndefined();
 		}
 
 		if (route.routes) {

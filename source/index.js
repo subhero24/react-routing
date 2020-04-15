@@ -27,11 +27,19 @@ if (useCustomTransition == undefined) {
 }
 
 export default function Routes(...args) {
+	let path;
 	let element;
 	let routes = args.pop() ?? [];
 	let options = args.pop() ?? {};
 
-	let { path = window.location.pathname + window.location.search + window.location.hash, base = '/' } = options;
+	let { location, base = '/' } = options;
+	if (typeof location === 'string') {
+		path = location;
+	} else if (window != undefined) {
+		path = window.location.pathname + window.location.search + window.location.hash;
+	} else {
+		path = '/';
+	}
 
 	routes = preprocessRoutes(routes);
 	element = createRouteElement(routes, path, base);
@@ -131,9 +139,9 @@ export default function Routes(...args) {
 			}
 
 			setMounted(true);
-			addEventListener('popstate', handler);
+			window.addEventListener('popstate', handler);
 			return function () {
-				removeEventListener('popstate', handler);
+				window.removeEventListener('popstate', handler);
 			};
 		}, []);
 

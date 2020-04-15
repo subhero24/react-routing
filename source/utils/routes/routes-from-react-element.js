@@ -12,7 +12,7 @@ export default function createRoutesFromReactElement(element) {
 			return children.map(e => createRoutesFromReactElement(e)[0]);
 		} else {
 			let route = {};
-			route.path = element.props.path ?? '*';
+			route.path = element.props.path;
 			route.render = element.type;
 			if (element.props.data) route.data = element.props.data;
 			if (element.props.children) route.routes = createRoutesFromReactElement(children);
