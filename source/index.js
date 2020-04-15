@@ -76,7 +76,7 @@ export default function Routes(...args) {
 					this.navigate(path, { state, title, replace: true });
 				},
 				navigate: function (path, options = {}) {
-					transition(function () {
+					function executeNaviation() {
 						setAction(options.replace ? REPLACE : PUSH);
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
@@ -87,7 +87,13 @@ export default function Routes(...args) {
 							setElement(element);
 							setLocationPath(target);
 						}
-					});
+					}
+
+					if (options.sticky) {
+						transition(executeNaviation);
+					} else {
+						executeNaviation();
+					}
 				},
 				get state() {
 					return historyState;
