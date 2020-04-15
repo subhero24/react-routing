@@ -27,14 +27,14 @@ if (useCustomTransition == undefined) {
 }
 
 export default function Routes(...args) {
-	let route;
+	let element;
 	let routes = args.pop() ?? [];
 	let options = args.pop() ?? {};
 
 	let { path = window.location.pathname + window.location.search + window.location.hash, base = '/' } = options;
 
 	routes = preprocessRoutes(routes);
-	route = createRouteElement(routes, path, base);
+	element = createRouteElement(routes, path, base);
 
 	return function Router(props) {
 		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
@@ -52,7 +52,7 @@ export default function Routes(...args) {
 		let [historyLength, setHistoryLength] = useState(window.history.length);
 		let [documentTitle, setDocumentTitle] = useState(window.document.title);
 
-		let [element, setElement] = useState(route);
+		let [routeElement, setRouteElement] = useState(element);
 
 		let location = useMemo(() => {
 			return new URL(locationPath, window.location.origin);
@@ -83,9 +83,8 @@ export default function Routes(...args) {
 
 						let target = Path.resolve(locationPath, `${path}`);
 						if (target !== locationPath) {
-							let element = createRouteElement(routes, target, base);
-							setElement(element);
 							setLocationPath(target);
+							setRouteElement(createRouteElement(routes, target, base));
 						}
 					}
 
@@ -126,9 +125,8 @@ export default function Routes(...args) {
 
 				let path = window.location.pathname + window.location.search + window.location.hash;
 				if (path !== locationPathRef.current) {
-					let element = createRouteElement(routes, path, '/');
-					setElement(element);
 					setLocationPath(path);
+					setRouteElement(createRouteElement(routes, path, '/'));
 				}
 			}
 
