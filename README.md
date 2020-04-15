@@ -127,8 +127,7 @@ function Component() {
 ```
 
 The history has all the same functions as your normal browser history object (go, back, forward, pushState, replaceState, ...)
-The react-sprout history also has one extra convenience function `navigate(url, { replace, state, title }`, which is a handy replacement for `pushState(state, title, url)` and `replaceState(state, title, url)`.
-A hook for this `navigate` function is available with `useNavigate` as a shortcut if your component does not need the whole `history` object.
+The react-sprout history also has one extra convenience function `navigate(url, { replace, state, title, sticky }`, which is a handy replacement for `pushState(state, title, url)` and `replaceState(state, title, url)`. For more info about the sticky option, see the `Suspense` part further in this document. A `useNavigate` hook shortcut is available for this `navigate` function if your component does not need the whole `history` object.
 
 ```javascript
 import { useNavigate } from 'react-sprout';
@@ -309,14 +308,7 @@ After your data is fetched, rendering will resume and the transition to the new 
 
 ## Suspense
 
-Sometimes a `navigate` to a new location does not happen immediately.
-When data is not yet ready or the component suspends for some other reason, the router will wait for the component, to execute the location change.
-To know if a location change is pending in the background, there is a `usePending` hook.
-
-The suspense transition timeout can be set by a `timeoutMs` prop on the router. The default is 4000ms.
-There are also two other properties that can be used to prevent flashing of a pending indicator.
-The first is `pendingDelayMs` for specifying a delay to pending being true.
-The second is `pendingMinimumMs` for specifying the minimum time pending is set to true.
+When navigating to a new location with `navigate`, there is a `sticky` option to enable the new location to load in the background. The current location will be kept on the screen, until the data of the new location is loaded. When the new location is ready to be displayed, the navigation will happen and the url will be updated. When using navigation like this, you should show an indicator to your users that the new route is loading in the background. The `usePending` hook returns if a navigation is still pending or not. The maximum amount of time that a navigation stays in the background, can be specified by a `timeoutMs` prop on the router element. The default is 4000ms.
 
 ```javascript
 import React from 'react'
