@@ -1,14 +1,13 @@
 import '../mocks/window';
 import '../mocks/history/basic';
 import '../mocks/document/empty';
-import '../mocks/location';
+import '../mocks/location/a/index.js';
 
 import Test from '../test';
 import React from 'react';
 import Routes from '../../source/index.js';
+import Redirect from '../../source/components/redirect.js';
 import Renderer from 'react-test-renderer';
-
-console.error('woot');
 
 function Route(props) {
 	return null;
@@ -17,14 +16,20 @@ function Route(props) {
 Test(function (test) {
 	test.description = `
 		Location:
-			/
+			/a/
 		Router:
-			<Route />
+			<Route path="a">
+				<Route path="." />
+				<Redirect path="/" to="." />
+			</Route>
 	`;
 
-	let Router = Routes(<Route />);
-
-	throw new Error('woot');
+	let Router = Routes(
+		<Route path="a">
+			<Route path="." />
+			<Redirect path="/" to="." />
+		</Route>,
+	);
 
 	let render;
 	Renderer.act(function () {
@@ -32,5 +37,5 @@ Test(function (test) {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error('A route without a path should match all locations');
+	if (result.rendered.props.component !== Route) throw new Error('Route /a/ should redirect to /a rendering Route');
 });
