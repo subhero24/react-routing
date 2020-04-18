@@ -1,8 +1,8 @@
 name: NPM Release
 
 on:
-    release:
-        types: [created]
+    push:
+        tags: ['v*']
 
 jobs:
     release:
