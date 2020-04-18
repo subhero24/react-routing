@@ -1,20 +1,23 @@
 import Path from 'path';
 import React from 'react';
 import ChildContext from '../../contexts/child';
+import SplatContext from '../../contexts/splat';
 import ParamsContext from '../../contexts/params';
 import ResourceContext from '../../contexts/resource';
 
 import createResource from '../create-resource';
 
 function Route(props) {
-	let { params, resource, component: Component, children, ...other } = props;
+	let { params, splat, resource, component: Component, children, ...other } = props;
 
 	return (
 		<ResourceContext.Provider value={resource}>
 			<ParamsContext.Provider value={params}>
-				<ChildContext.Provider value={children}>
-					<Component {...other}>{children}</Component>
-				</ChildContext.Provider>
+				<SplatContext.Provider value={splat}>
+					<ChildContext.Provider value={children}>
+						<Component {...other}>{children}</Component>
+					</ChildContext.Provider>
+				</SplatContext.Provider>
 			</ParamsContext.Provider>
 		</ResourceContext.Provider>
 	);
@@ -26,7 +29,7 @@ export default function routeElement(routes, path, base = '/') {
 		let match = route.path(path, base, strict);
 
 		if (match) {
-			let { params, length } = match;
+			let { splat, params, length } = match;
 			let pathname = Path.join(base, path);
 			let matched = pathname.slice(0, length);
 			let unmatched = pathname.slice(length);
@@ -39,7 +42,7 @@ export default function routeElement(routes, path, base = '/') {
 			let childRoute = route.routes ? routeElement(route.routes, childPath, childBase) : null;
 
 			let element = (
-				<Route params={params} resource={resource} component={component}>
+				<Route params={params} splat={splat} resource={resource} component={component}>
 					{childRoute}
 				</Route>
 			);
