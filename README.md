@@ -1,4 +1,4 @@
-# React-sprout
+# :seedling: React-sprout
 
 A suspense ready react router
 
