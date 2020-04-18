@@ -230,6 +230,64 @@ const ApplicationRouter = Router(
 );
 ```
 
+## Redirects
+
+You can use a `<Redirect path="..." to="..." />` in your routes to redirect to another location. This component must not be used in your React components itself, but only in the route configuration.
+
+An example to redirect from a deprecated location `/users/me` to `/profile`.
+
+```javascript
+import { Redirect } from 'react-sprout'
+
+const ApplicationRouter = Router(
+  <Fragment>
+    <Users path="users">
+      <User path=":id" />
+    </Users>
+    <Profile path="profile" />
+    <Redirect path="users/me" to="profile" />
+  </Fragment>
+)
+```
+
+Another example to prevent locations with a trailing `/`.
+
+```javascript
+import { Redirect } from 'react-sprout'
+
+const ApplicationRouter = Router(
+  <Users path="users">
+    <User path=":id" />
+    <UserIndex path="." />
+    <Redirect path="/" to="." />
+  </Users>
+)
+```
+
+Do not forget that `<Redirect />` elements have no children, and thus are matched strictly to the location (see `strict` and `loose` matching under `Advanced` )
+So if you want to redirect a location, you may need to specify all occurences that you want to be redirected.
+
+```javascript
+import { Redirect } from 'react-sprout'
+
+const ApplicationRouter = Router(
+  <Users path="users">
+    <User path=":id" />
+    <UserIndex path="." />
+    <UserIndex path="/" />
+  </Users>
+  <Redirect path="people" to="users" />
+  <Redirect path="people/" to="users/" />
+  <Redirect path="people/*" to="users/*" />
+)
+```
+
+As you can see in the previous example where splats are used, splats and params are fully interpolated into the `to` prop of the `<Redirect />`.
+
+```javascript
+<Redirect path="people/:id/*" to="users/:id/*" />
+```
+
 ## Components
 
 ### Link
