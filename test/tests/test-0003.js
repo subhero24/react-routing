@@ -8,8 +8,6 @@ import React from 'react';
 import Routes from '../../source/index.js';
 import Renderer from 'react-test-renderer';
 
-console.error('woot');
-
 function Route(props) {
 	return null;
 }
@@ -23,8 +21,6 @@ Test(function (test) {
 	`;
 
 	let Router = Routes(<Route />);
-
-	throw new Error('woot');
 
 	let render;
 	Renderer.act(function () {

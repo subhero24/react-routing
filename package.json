@@ -7,7 +7,7 @@
 	"source": "index.js",
 	"scripts": {
 		"build": "roller",
-		"test": "echo \"Error: no test specified\" && exit 1"
+		"test": "node -r esm -r @babel/register test/run.js"
 	},
 	"keywords": [
 		"react",
