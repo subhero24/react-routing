@@ -26,7 +26,7 @@
 	"rules": {
 		"getter-return": "warn",
 		"no-empty": "off",
-		"no-console": "warn",
+		"no-console": "off",
 		"no-debugger": "warn",
 		"no-unused-vars": [
 			"warn",
