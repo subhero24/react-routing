@@ -6,6 +6,7 @@ import LocationContext from './contexts/location';
 
 import { useRef, useMemo, useState, useEffect, useTransition, useLayoutEffect } from 'react';
 
+import calculatePath from './utils/paths/calculate-path';
 import preprocessRoutes from './utils/routes/preprocess';
 import createRouteElement from './utils/routes/route-element';
 
@@ -27,22 +28,62 @@ if (useCustomTransition == undefined) {
 }
 
 export default function Routes(...args) {
-	let path;
-	let element;
 	let routes = args.pop() ?? [];
 	let options = args.pop() ?? {};
 
-	let { location, base = '/' } = options;
-	if (typeof location === 'string') {
-		path = location;
-	} else if (window != undefined) {
-		path = window.location.pathname + window.location.search + window.location.hash;
+	let { location, history, document, base = '/' } = options;
+
+	let rootWindow;
+	try {
+		rootWindow = window;
+	} catch (error) {
+		let isReferenceError = error instanceof ReferenceError;
+		if (!isReferenceError) throw error;
+	}
+
+	let rootLocation;
+	if (location != undefined) {
+		if (typeof location === 'string') {
+			try {
+				rootLocation = new URL(location);
+			} catch (error) {
+				try {
+					rootLocation = new URL(Path.join('http://localhost/', location));
+				} catch (localhostError) {
+					throw error;
+				}
+			}
+		} else {
+			rootLocation = location;
+		}
+	} else if (rootWindow?.location != undefined) {
+		rootLocation = rootWindow.location;
 	} else {
-		path = '/';
+		throw new Error(`React-sprout did not find a location. Please specify a location in the react-sprout options.`);
+	}
+
+	// Create a rootHistory to be used in the component
+	// Defaults to the browser's history
+	let rootHistory;
+	if (history != undefined) {
+		rootHistory = history;
+	} else if (rootWindow?.history != undefined) {
+		rootHistory = rootWindow.history;
+	}
+
+	// Create a rootDocument to be used in the component
+	// Defaults to the browser's document
+	let rootDocument;
+	if (document != undefined) {
+		rootDocument = document;
+	} else if (rootWindow?.document != undefined) {
+		rootDocument = rootWindow.document;
 	}
 
 	routes = preprocessRoutes(routes);
-	element = createRouteElement(routes, path, base);
+
+	let rootPath = calculatePath(rootLocation);
+	let rootElement = createRouteElement(routes, rootPath, base);
 
 	return function Router(props) {
 		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
@@ -54,28 +95,45 @@ export default function Routes(...args) {
 		let [action, setAction] = useState();
 		let [mounted, setMounted] = useState(false);
 		let [transition, pending] = useCustomTransition({ timeoutMs });
+		let [routeElement, setRouteElement] = useState(rootElement);
 
-		let [locationPath, setLocationPath] = useState(path);
-		let [historyState, setHistoryState] = useState(window.history.state);
-		let [historyLength, setHistoryLength] = useState(window.history.length);
-		let [documentTitle, setDocumentTitle] = useState(window.document.title);
-
-		let [routeElement, setRouteElement] = useState(element);
+		let [locationPath, setLocationPath] = useState(rootPath);
+		let [historyState, setHistoryState] = useState(rootHistory?.state);
+		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
+		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
 
 		let location = useMemo(() => {
-			return new URL(locationPath, window.location.origin);
+			return new URL(locationPath, rootLocation.origin);
 		}, [locationPath]);
 
 		let history = useMemo(() => {
 			return {
 				go: function (delta) {
-					window.history.go(delta);
+					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+						console.warn(
+							`History.go can not be executed without a history. Please specify a history in the react-sprout options.`,
+						);
+					} else {
+						rootHistory.go(delta);
+					}
 				},
 				back: function () {
-					window.history.back();
+					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+						console.warn(
+							`History.back can not be executed without a history. Please specify a history in the react-sprout options.`,
+						);
+					} else {
+						rootHistory.back();
+					}
 				},
 				forward: function () {
-					window.history.forward();
+					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+						console.warn(
+							`History.forward can not be executed without a history. Please specify a history in the react-sprout options.`,
+						);
+					} else {
+						rootHistory.forward();
+					}
 				},
 				pushState: function (state, title, path = '.') {
 					this.navigate(path, { state, title, replace: false });
@@ -84,7 +142,7 @@ export default function Routes(...args) {
 					this.navigate(path, { state, title, replace: true });
 				},
 				navigate: function (path, options = {}) {
-					function executeNaviation() {
+					function executeNavigation() {
 						setAction(options.replace ? REPLACE : PUSH);
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
@@ -97,9 +155,9 @@ export default function Routes(...args) {
 					}
 
 					if (options.sticky) {
-						transition(executeNaviation);
+						transition(executeNavigation);
 					} else {
-						executeNaviation();
+						executeNavigation();
 					}
 				},
 				get state() {
@@ -109,10 +167,22 @@ export default function Routes(...args) {
 					return historyLength;
 				},
 				get scrollRestoration() {
-					return window.history.scrollRestoration;
+					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+						console.warn(
+							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
+						);
+					} else {
+						return rootHistory.scrollRestoration;
+					}
 				},
 				set scrollRestoration(scroll) {
-					window.history.scrollRestoration = scroll;
+					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+						console.warn(
+							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
+						);
+					} else {
+						rootHistory.scrollRestoration = scroll;
+					}
 				},
 			};
 		}, [locationPath, historyLength, historyState, transition]);
@@ -127,11 +197,11 @@ export default function Routes(...args) {
 		useEffect(() => {
 			function handler() {
 				setAction(POP);
-				setHistoryState(window.history.state);
-				setHistoryLength(window.history.length);
-				setDocumentTitle(window.document.title);
+				setHistoryState(rootHistory?.state);
+				setHistoryLength(rootHistory?.length);
+				setDocumentTitle(rootDocument?.title);
 
-				let path = window.location.pathname + window.location.search + window.location.hash;
+				let path = calculatePath(rootLocation);
 				if (path !== locationPathRef.current) {
 					setLocationPath(path);
 					setRouteElement(createRouteElement(routes, path, '/'));
@@ -139,24 +209,24 @@ export default function Routes(...args) {
 			}
 
 			setMounted(true);
-			window.addEventListener('popstate', handler);
+			rootWindow?.addEventListener?.('popstate', handler);
 			return function () {
-				window.removeEventListener('popstate', handler);
+				rootWindow?.removeEventListener?.('popstate', handler);
 			};
 		}, []);
 
 		// Update history length state because we could not know it in advance
 		// as a popstate could be fired to a history item in the middle of the stack
 		useLayoutEffect(() => {
-			setHistoryLength(window.history.length);
+			setHistoryLength(rootHistory?.length);
 		}, [setHistoryLength]);
 
 		// If component did render with updated location/history, update the browsers history
 		useLayoutEffect(() => {
 			if (action === PUSH) {
-				window.history.pushState(historyState, documentTitle, locationPath);
+				rootHistory?.pushState?.(historyState, documentTitle, locationPath);
 			} else if (action === REPLACE) {
-				window.history.replaceState(historyState, documentTitle, locationPath);
+				rootHistory?.replaceState?.(historyState, documentTitle, locationPath);
 			}
 		}, [action, historyState, documentTitle, locationPath]);
 

@@ -1,26 +1,17 @@
-import '../mocks/window';
-import '../mocks/history/basic';
-import '../mocks/document/empty';
-import '../mocks/location/a';
-
 import Test from '../test';
 import React from 'react';
 import Routes from '../../source/index.js';
 import Renderer from 'react-test-renderer';
 
-function Route(props) {
+function Route() {
 	return null;
 }
 
-Test(function (test) {
-	test.description = `
-		Location:
-			/a
-		Router:
-			<Route path="/a" />
-	`;
+Test(function () {
+	let routes = <Route path="/" />;
+	let location = '/';
 
-	let Router = Routes(<Route path="/a" />);
+	let Router = Routes({ location }, routes);
 
 	let render;
 	Renderer.act(function () {

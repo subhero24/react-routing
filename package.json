@@ -6,8 +6,9 @@
 	"module": "dist/react-sprout.module.js",
 	"source": "index.js",
 	"scripts": {
-		"build": "roller",
-		"test": "node -r esm -r @babel/register test/run.js"
+		"lint": "eslint source",
+		"test": "node -r esm -r @babel/register test/run.js",
+		"build": "roller"
 	},
 	"keywords": [
 		"react",

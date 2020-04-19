@@ -1,8 +1,3 @@
-import '../mocks/window';
-import '../mocks/history/basic';
-import '../mocks/document/empty';
-import '../mocks/location/a/1/x/y/z';
-
 import Test from '../test';
 import React from 'react';
 import Routes from '../../source/index.js';
@@ -11,27 +6,20 @@ import Renderer from 'react-test-renderer';
 
 import { Fragment } from 'react';
 
-function Route(props) {
+function Route() {
 	return null;
 }
 
-Test(function (test) {
-	test.description = `
-		Location:
-			/a/1/x/y/z
-		Router:
-			<Fragment>
-				<Route path="b/:id/*">
-				<Redirect path="a/:id/*" to="b/:id/*" />
-			</Fragment>
-	`;
-
-	let Router = Routes(
+Test(function () {
+	let routes = (
 		<Fragment>
 			<Route path="b/:id/*" />
 			<Redirect path="a/:id/*" to="b/:id/*" />
-		</Fragment>,
+		</Fragment>
 	);
+	let location = '/a/1/x/y/z';
+
+	let Router = Routes({ location }, routes);
 
 	let render;
 	Renderer.act(function () {
