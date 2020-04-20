@@ -2,11 +2,13 @@ import Path from 'path';
 import FileSystem from 'fs-extra';
 import ChildProcess from 'child_process';
 
-const DEBUG = process.env.BABEL_ENV === 'debug';
+// const DEBUG =
+const ARGS = process.argv.slice(2);
+const DEBUG = ARGS[1] === 'debug';
 const DIRECTORY = Path.join(__dirname, 'tests');
 
 async function run() {
-	console.log('🚀 Launching tests');
+	console.log('🚀 Launching');
 
 	let exitCode;
 	let testPaths;

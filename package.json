@@ -7,7 +7,7 @@
 	"source": "index.js",
 	"scripts": {
 		"lint": "eslint source",
-		"test": "node -r esm -r @babel/register test/run.js",
+		"test": "BABEL_ENV=debug node -r esm -r @babel/register test/run.js",
 		"build": "roller"
 	},
 	"keywords": [
