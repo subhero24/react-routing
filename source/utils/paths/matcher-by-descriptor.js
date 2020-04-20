@@ -1,7 +1,7 @@
 import Path from 'path';
 
 export default function matcherByDescriptor(descriptor) {
-	return function(path, base, strict) {
+	return function (path, base, strict) {
 		let splat;
 		let params;
 		let length = 0;
@@ -22,6 +22,7 @@ export default function matcherByDescriptor(descriptor) {
 			} else if (descriptorPart[0] === ':') {
 				if (pathParts.length === 0) return;
 				let pathPart = pathParts.shift();
+				if (pathPart === '') return;
 				let paramName = descriptorPart.slice(1);
 				paramNames = [...paramNames, paramName];
 				paramValues = [...paramValues, pathPart];
