@@ -1,6 +1,6 @@
 {
 	"name": "react-sprout",
-	"version": "0.0.5",
+	"version": "0.0.6",
 	"description": "A suspense ready react router",
 	"main": "dist/react-sprout.js",
 	"module": "dist/react-sprout.module.js",
