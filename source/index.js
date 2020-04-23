@@ -4,7 +4,7 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useRef, useMemo, useState, useEffect, useTransition, useLayoutEffect } from 'react';
+import { useRef, useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
 
 import calculatePath from './utils/paths/calculate-path';
 import preprocessRoutes from './utils/routes/preprocess';
@@ -14,10 +14,10 @@ const POP = 'POP';
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
-// Mock useTransition to support versions without useTransition
-let useCustomTransition = useTransition;
-if (useCustomTransition == undefined) {
-	useCustomTransition = function () {
+// Mock useTransition to support React versions without useTransition
+let useTransition = useReactTransition;
+if (useTransition == undefined) {
+	useTransition = function () {
 		let pending = false;
 		let transition = function (execute) {
 			execute();
@@ -94,8 +94,8 @@ export default function Routes(...args) {
 
 		let [action, setAction] = useState();
 		let [mounted, setMounted] = useState(false);
-		let [transition, pending] = useCustomTransition({ timeoutMs });
 		let [routeElement, setRouteElement] = useState(rootElement);
+		let [transition, pending] = useTransition({ timeoutMs });
 
 		let [locationPath, setLocationPath] = useState(rootPath);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
