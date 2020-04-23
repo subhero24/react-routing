@@ -109,29 +109,29 @@ export default function Routes(...args) {
 		let history = useMemo(() => {
 			return {
 				go: function (delta) {
-					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+					if (!rootHistory && process.env.NODE_ENV === 'development') {
 						console.warn(
 							`History.go can not be executed without a history. Please specify a history in the react-sprout options.`,
 						);
-					} else {
-						rootHistory.go(delta);
+					} else if (rootHistory) {
+						rootHistory?.go(delta);
 					}
 				},
 				back: function () {
-					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+					if (!rootHistory && process.env.NODE_ENV === 'development') {
 						console.warn(
 							`History.back can not be executed without a history. Please specify a history in the react-sprout options.`,
 						);
-					} else {
-						rootHistory.back();
+					} else if (rootHistory) {
+						rootHistory?.back();
 					}
 				},
 				forward: function () {
-					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+					if (!rootHistory && process.env.NODE_ENV === 'development') {
 						console.warn(
 							`History.forward can not be executed without a history. Please specify a history in the react-sprout options.`,
 						);
-					} else {
+					} else if (rootHistory) {
 						rootHistory.forward();
 					}
 				},
@@ -167,20 +167,21 @@ export default function Routes(...args) {
 					return historyLength;
 				},
 				get scrollRestoration() {
-					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+					if (!rootHistory && process.env.NODE_ENV === 'development') {
 						console.warn(
 							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
 						);
-					} else {
+					} else if (rootHistory) {
 						return rootHistory.scrollRestoration;
 					}
+					return false;
 				},
 				set scrollRestoration(scroll) {
-					if (process.env.NODE_ENV === 'development' && rootHistory == undefined) {
+					if (!rootHistory && process.env.NODE_ENV === 'development') {
 						console.warn(
 							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
 						);
-					} else {
+					} else if (rootHistory) {
 						rootHistory.scrollRestoration = scroll;
 					}
 				},
