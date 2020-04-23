@@ -63,6 +63,8 @@ async function runTest(testPath) {
 	if (DEBUG) args.splice(-1, 0, '--inspect-brk=9229');
 
 	let promise = new Promise(function (resolve) {
+		// Running could be faster by using fork or spawn?
+		// Spawn did not report the error as I wanted, have to look into fork
 		ChildProcess.exec(`${cmd} ${args.join(' ')}`, function (stderr, stdout, error) {
 			resolve({ stdout, stderr: error, error });
 		});
