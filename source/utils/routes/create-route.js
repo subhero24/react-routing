@@ -6,13 +6,17 @@ import SplatContext from '../../contexts/splat';
 import ParamsContext from '../../contexts/params';
 import ResourceContext from '../../contexts/resource';
 
-import isParamSegment from '../paths/is-param-segment';
+import interpolate from '../paths/interpolate-path';
 import createResource from '../create-resource';
-import isStaticSegment from '../paths/is-static-segment';
-import isSplatSegment from '../paths/is-splat-segment';
 
 function Route(props) {
 	let { params, splat, resource, component: Component, children, ...other } = props;
+
+	// There are a lot of contexts provider per route, but as they can change independently,
+	// making a context provider with one value is not desirable
+
+	// The ChildContext is used for the <Child /> component, to know what children to render.
+	// So we set children on context, even though they are passed as the children of Component.
 
 	return (
 		<ResourceContext.Provider value={resource}>
@@ -34,28 +38,37 @@ class RedirectError extends Error {
 	}
 }
 
-export default function rootRouteElement(routes, path, base = '/') {
-	let element = null;
-	while (element == null) {
+export default function createRootRoute(routes, path, base = '/') {
+	// When redirected to a new url, we should check to see if the url was already encountered before,
+	// as to prevent an infinite loop in redirects. So we keep an array of all visited paths, to prevent this.
+	// With this we can also improve error reporting, as we can specify how the infinite loop of redirects came to be.
+	let redirects = [path];
+
+	while (true) {
 		try {
-			return routeElement(routes, path, base);
+			return { path, element: createRoute(routes, path, base) };
 		} catch (error) {
 			if (error instanceof RedirectError) {
-				let basePath = Path.join(base, path);
-				if (basePath === error.to) {
-					return null;
+				// We update the path to the new location
+				path = Path.join('/', Path.relative(base, error.to));
+
+				// Before continuing to render with the new path, we check for infinite redirect loops
+				if (redirects.includes(path)) {
+					redirects = [...redirects, path];
+
+					let trail = redirects.join(' to ');
+					throw new Error(`There was an infinite loop of redirects. Redirecting from ${trail}.`);
 				} else {
-					path = Path.join('/', Path.relative(base, error.to));
+					redirects = [...redirects, path];
 				}
 			} else {
 				throw error;
 			}
 		}
 	}
-	return element;
 }
 
-function routeElement(routes, path, base = '/') {
+function createRoute(routes, path, base = '/') {
 	for (let route of routes) {
 		let strict = route.routes == undefined;
 		let match = route.path(path, base, strict);
@@ -76,7 +89,7 @@ function routeElement(routes, path, base = '/') {
 
 			let childPath = unmatched;
 			let childBase = Path.join(base, matched);
-			let childRoute = route.routes ? routeElement(route.routes, childPath, childBase) : null;
+			let childRoute = route.routes ? createRoute(route.routes, childPath, childBase) : null;
 
 			let element = (
 				<Route params={params} splat={splat} resource={resource} component={component}>
@@ -89,26 +102,4 @@ function routeElement(routes, path, base = '/') {
 	}
 
 	return null;
-}
-
-function interpolate(path, params, splat) {
-	let index = 0;
-	let result = [];
-	let segments = path.split('/');
-	for (let segment of segments) {
-		if (isStaticSegment(segment)) {
-			result.push(segment);
-		} else if (isParamSegment(segment)) {
-			let paramName = segment.slice(1);
-			if (params instanceof Array) {
-				result.push(params[index++]);
-			} else {
-				result.push(params[paramName]);
-			}
-		} else if (isSplatSegment(segment)) {
-			result.push(...splat);
-		}
-	}
-
-	return result.join('/');
 }

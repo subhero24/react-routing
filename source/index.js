@@ -6,9 +6,9 @@ import LocationContext from './contexts/location';
 
 import { useRef, useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
 
+import createRoute from './utils/routes/create-route';
 import calculatePath from './utils/paths/calculate-path';
 import preprocessRoutes from './utils/routes/preprocess';
-import createRouteElement from './utils/routes/route-element';
 
 const POP = 'POP';
 const PUSH = 'PUSH';
@@ -82,8 +82,8 @@ export default function Routes(...args) {
 
 	routes = preprocessRoutes(routes);
 
-	let rootPath = calculatePath(rootLocation);
-	let rootElement = createRouteElement(routes, rootPath, base);
+	let path = calculatePath(rootLocation);
+	let route = createRoute(routes, path, base);
 
 	return function Router(props) {
 		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
@@ -92,18 +92,34 @@ export default function Routes(...args) {
 		// https://github.com/facebook/react/issues/18595
 		let { timeoutMs = 4000 } = props;
 
-		let [action, setAction] = useState();
+		let [action, setAction] = useState(REPLACE);
 		let [mounted, setMounted] = useState(false);
-		let [routeElement, setRouteElement] = useState(rootElement);
 		let [transition, pending] = useTransition({ timeoutMs });
+		let [routeElement, setRouteElement] = useState(route.element);
 
-		let [locationPath, setLocationPath] = useState(rootPath);
+		let [locationPath, setLocationPath] = useState(route.path);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
 		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
 		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
 
 		let location = useMemo(() => {
-			return new URL(locationPath, rootLocation.origin);
+			let result = new URL(locationPath, rootLocation.origin);
+
+			// Could not figure out a way to copy the properties of the above URL object to my own object,
+			// as all the properties are defined on its prototype. So instead of returning another object
+			// with the same props, we will add the location functions to result, and return result.
+			result.reload = function (force) {
+				if (force) {
+					if (rootLocation?.reload) rootLocation.reload(true);
+				} else {
+					let route = createRoute(routes, locationPath, base);
+					setAction(REPLACE);
+					setLocationPath(route.path);
+					setRouteElement(route.element);
+				}
+			};
+
+			return result;
 		}, [locationPath]);
 
 		let history = useMemo(() => {
@@ -149,8 +165,9 @@ export default function Routes(...args) {
 
 						let target = Path.resolve(locationPath, `${path}`);
 						if (target !== locationPath) {
-							setLocationPath(target);
-							setRouteElement(createRouteElement(routes, target, base));
+							let route = createRoute(routes, target, base);
+							setLocationPath(route.path);
+							setRouteElement(route.element);
 						}
 					}
 
@@ -204,8 +221,9 @@ export default function Routes(...args) {
 
 				let path = calculatePath(rootLocation);
 				if (path !== locationPathRef.current) {
-					setLocationPath(path);
-					setRouteElement(createRouteElement(routes, path, '/'));
+					let route = createRoute(routes, path, '/');
+					setLocationPath(route.path);
+					setRouteElement(route.element);
 				}
 			}
 
