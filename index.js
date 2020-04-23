@@ -11,4 +11,6 @@ export { default as useResource } from './source/hooks/use-resource';
 
 export { default as Link } from './source/components/link';
 export { default as Child } from './source/components/child';
+export { default as Redirect } from './source/components/redirect';
+
 export { default as Router } from './source/index.js';
