@@ -68,16 +68,17 @@ export default function createRootRoute(routes, path, base = '/') {
 	}
 }
 
-function createRoute(routes, path, base = '/') {
+function createRoute(routes, path, base = '/', parentParams = {}) {
 	for (let route of routes) {
 		let strict = route.routes == undefined;
 		let match = route.path(path, base, strict);
 
 		if (match) {
-			let { splat, params, length } = match;
+			let { params: childParams, splat, length } = match;
 			let pathname = Path.join(base, path);
 			let matched = pathname.slice(0, length);
 			let unmatched = pathname.slice(length);
+			let params = { ...parentParams, ...childParams };
 
 			let resource = route.data ? createResource(route.data(params)) : undefined;
 			let component = route.render;
@@ -89,7 +90,7 @@ function createRoute(routes, path, base = '/') {
 
 			let childPath = unmatched;
 			let childBase = Path.join(base, matched);
-			let childRoute = route.routes ? createRoute(route.routes, childPath, childBase) : null;
+			let childRoute = route.routes ? createRoute(route.routes, childPath, childBase, params) : null;
 
 			let element = (
 				<Route params={params} splat={splat} resource={resource} component={component}>
