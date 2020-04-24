@@ -6,7 +6,7 @@ import useNavigate from '../hooks/use-navigate';
 import { forwardRef } from 'react';
 
 export default forwardRef(function Link(props, ref) {
-	let { to, state, title, replace, onClick, ...other } = props;
+	let { to, state, title, replace, sticky, onClick, ...other } = props;
 
 	let location = useLocation();
 	let navigate = useNavigate();
@@ -17,7 +17,7 @@ export default forwardRef(function Link(props, ref) {
 		if (onClick) onClick(event);
 		if (shouldNavigate(event)) {
 			event.preventDefault();
-			navigate(href, { replace, state, title });
+			navigate(href, { replace, state, title, sticky });
 		}
 	}
 
