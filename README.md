@@ -146,6 +146,16 @@ function Component(props) {
 }
 ```
 
+The `params` object contains all params from every parent route.
+
+```javascript
+<ParentCompoent path=":one">
+  <ChildComponent path=":two" />
+</ParentCompoent>
+```
+
+When rendering the location `/a/b`, the ParentComponent will have `{ one: 'a' }` params, and the ChildComponent will have `{ one: 'a', two: 'b' }` params.
+
 ## Splats
 
 Whether you specified your path with an `*` or not. The part of the path that was not matched is called the splat.
