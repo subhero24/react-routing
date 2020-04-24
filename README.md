@@ -501,7 +501,7 @@ const Router = Routes({ location: 'application/a/static/path', base: 'applicatio
 );
 ```
 
-### Resources
+## Resources
 
 There is a `useData` hook for getting the route data. This will suspend rendering if the data is not ready.
 There is also a `useResource` hook which gets the underlying resource for the data, and does not suspend rendering.
@@ -542,7 +542,12 @@ This method is to be preferred over passing the data itself as a prop, because t
 
 Passing the resource instead allows the `ParentComponent` to not suspend, but let the `ChildComponent` do the suspending with `useData`. If there is a `<Suspense>` boundary between Parent and Child, it will be used when the child suspends. If the Parent did the suspending, that `<Suspense>` boundary could not have been activated.
 
-### Route config
+## Route config
+
+```
+If you want to know how react-sprout works, read on.
+If you are just interested in using it, you can skip this last part of the readme.
+```
 
 When you create the router with a React element, it converts the React element tree to a route config array.
 
