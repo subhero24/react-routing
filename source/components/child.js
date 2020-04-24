@@ -5,5 +5,5 @@ import useChild from '../hooks/use-child';
 export default function Child(props) {
 	let child = useChild();
 
-	return cloneElement(child, props);
+	return child == null ? null : cloneElement(child, props);
 }
