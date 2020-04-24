@@ -73,11 +73,9 @@ function ParentComponent(props) {
 
 Route elements that do not have any children routes, are matched very strictly to the current location.
 
-The route element `<Component path="a" />` will NOT match with `/a/` or `/a/b`. It will match only with `/a`. 
-
-The route element `<Component path="a/" />` will NOT match with `/a` or `/a/b`. It matches the trailing slash path `/a/`.
-
-The route element `<Component path="a/*" />` will NOT match with `/a` or `/a/`. It matches the paths that have more segments after `/a/`, like `/a/b`.
+- The route element `<Component path="a" />` will NOT match with `/a/` or `/a/b`. It will match only with `/a`. 
+- The route element `<Component path="a/" />` will NOT match with `/a` or `/a/b`. It matches the trailing slash path `/a/`.
+- The route element `<Component path="a/*" />` will NOT match with `/a` or `/a/`. It matches paths like `/a/b`.
 
 So instead of matching all routes, `<Component path="*" />` will only match routes that have at least 1 segment!
 If you want to match all routes, you can omit the `path` prop.
@@ -158,8 +156,9 @@ When rendering the location `/a/b`, the ParentComponent will have `{ one: 'a' }`
 
 ## Splats
 
-Whether you specified your path with an `*` or not. The part of the path that was not matched is called the splat.
+The part of the path that was not matched is called the splat.
 There is a `useSplat` hook for this unmatched part of the url, and it is split into an array.
+The splat always contains the rest of the url whether you specified your path with an `*` or not.  
 
 ```javascript
 <Admin path="admin">
