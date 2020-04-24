@@ -2,8 +2,14 @@ name: Build
 
 on:
   push:
+    paths:
+      - 'index.js'
+      - 'source/**'
     branches: [master]
   pull_request:
+    paths: 
+      - 'index.js'
+      - 'source/**'
     branches: [master]
     
 jobs:
