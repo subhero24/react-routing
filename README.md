@@ -74,7 +74,9 @@ function ParentComponent(props) {
 Route elements that do not have any children routes, are matched very strictly to the current location.
 
 The route element `<Component path="a" />` will NOT match with `/a/` or `/a/b`. It will match only with `/a`. 
+
 The route element `<Component path="a/" />` will NOT match with `/a` or `/a/b`. It matches the trailing slash path `/a/`.
+
 The route element `<Component path="a/*" />` will NOT match with `/a` or `/a/`. It matches the paths that have more segments after `/a/`, like `/a/b`.
 
 So instead of matching all routes, `<Component path="*" />` will only match routes that have at least 1 segment!
@@ -262,7 +264,7 @@ const Router = Routes(
 ## Redirects
 
 You can use a `<Redirect path="..." to="..." />` in your routes to redirect to another location. 
-This component should not be used in your components, but can be used in your route config. 
+This `<Redirect />` should not be used in your components, but can be used in your route config. 
 
 Here's an example to redirect from a deprecated location `/users/me` to `/profile`.
 
@@ -345,24 +347,24 @@ the `<Child />` component is there to help. It also renders the child route, but
 import Routes, { Child, useParams } from 'react-sprout';
 
 const Router = Routes(
-  <ParentComponent path="/foo/:bar">
+  <ParentComponent path="/user/:id">
     <ChildComponent />
   </ParentComponent>,
 );
 
 function ParentComponent(props) {
-  let { bar } = useParams()
+  let { id } = useParams()
 
   return (
     <div>
       <h1>Parent</h1>
-      <Child bar={bar} />
+      <Child userId={id} />
     </div>
   );
 }
 
 function ChildComponent(props) {
-  // Here props.bar will be the param of the parent path
+  // Here props.userId will be the :id param of the parent path
 }
 ```
 
@@ -387,7 +389,7 @@ const Router = Routes(
 
 function Application() {
   <Suspense fallback="loading...">
-    <ApplicationRouter />
+    <Router />
   </Suspense>
 }
 
@@ -580,7 +582,7 @@ Every element becomes a route with 4 possible attributes:
 React-sprout also allows you to pass such a configuration object directly, instead of the React elements, for advanced use cases.
 
 ```javascript
-const ApplicationRouter = Router([
+const Router = Routes([
   {
     path: 'parent',
     data: fetchSomeData,
