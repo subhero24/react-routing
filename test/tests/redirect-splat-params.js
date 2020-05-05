@@ -27,7 +27,7 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error(`Redirect did not render target path`);
+	if (result.rendered.props.render !== Route) throw new Error(`Redirect did not render target path`);
 	if (result.rendered.props.params.id !== '1') throw new Error(`Redirect did not interpolate :id param`);
 	if (result.rendered.props.splat == undefined) throw new Error(`Redirect did not interpolate * splat`);
 	if (result.rendered.props.splat[0] !== 'x') throw new Error(`Redirect did not interpolate * splat correctly`);

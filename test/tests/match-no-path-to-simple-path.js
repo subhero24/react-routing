@@ -19,5 +19,5 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error('A route without a path should match all locations');
+	if (result.rendered.props.render !== Route) throw new Error('A route without a path should match all locations');
 });

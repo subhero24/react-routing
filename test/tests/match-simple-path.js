@@ -19,5 +19,5 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error('Route without leading slash should still match');
+	if (result.rendered.props.render !== Route) throw new Error('Route without leading slash should still match');
 });

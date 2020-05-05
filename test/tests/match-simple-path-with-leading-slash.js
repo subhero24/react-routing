@@ -19,5 +19,5 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error('Did not render Route');
+	if (result.rendered.props.render !== Route) throw new Error('Did not render Route');
 });

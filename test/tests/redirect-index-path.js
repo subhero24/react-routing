@@ -25,5 +25,5 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== Route) throw new Error('Route /a/ should redirect to /a rendering Route');
+	if (result.rendered.props.render !== Route) throw new Error('Route /a/ should redirect to /a rendering Route');
 });

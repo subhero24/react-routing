@@ -33,7 +33,6 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.props.component !== ParentRoute) throw new Error('The parent route did not match');
-	if (result.rendered.props.children.props.component !== ChildRouteB)
-		throw new Error('The child route did not match');
+	if (result.rendered.props.render !== ParentRoute) throw new Error('The parent route did not match');
+	if (result.rendered.props.children.props.render !== ChildRouteB) throw new Error('The child route did not match');
 });

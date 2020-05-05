@@ -6,9 +6,11 @@ import LocationContext from './contexts/location';
 
 import { useRef, useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
 
-import createRoute from './utils/routes/create-route';
+import useLatestRef from './hooks/use-latest-ref';
+
 import calculatePath from './utils/paths/calculate-path';
 import preprocessRoutes from './utils/routes/preprocess';
+import createRouteElement from './utils/routes/create-route-element';
 
 const POP = 'POP';
 const PUSH = 'PUSH';
@@ -83,7 +85,7 @@ export default function Routes(...args) {
 	routes = preprocessRoutes(routes);
 
 	let path = calculatePath(rootLocation);
-	let route = createRoute(routes, path, base);
+	let routeElement = createRouteElement(routes, path, { base });
 
 	return function Router(props) {
 		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
@@ -94,13 +96,16 @@ export default function Routes(...args) {
 
 		let [action, setAction] = useState(REPLACE);
 		let [mounted, setMounted] = useState(false);
+		let [element, setElement] = useState(routeElement);
 		let [transition, pending] = useTransition({ timeoutMs });
-		let [routeElement, setRouteElement] = useState(route.element);
 
-		let [locationPath, setLocationPath] = useState(route.path);
+		let [locationPath, setLocationPath] = useState(routeElement?.props.path);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
 		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
 		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
+
+		let elementRef = useLatestRef(element);
+		let locationPathRef = useLatestRef(locationPath);
 
 		let location = useMemo(() => {
 			let result = new URL(locationPath, rootLocation.origin);
@@ -109,18 +114,13 @@ export default function Routes(...args) {
 			// as all the properties are defined on its prototype. So instead of returning another object
 			// with the same props, we will add the location functions to result, and return result.
 			result.reload = function (force) {
-				if (force) {
-					if (rootLocation?.reload) rootLocation.reload(true);
-				} else {
-					let route = createRoute(routes, locationPath, base);
-					setAction(REPLACE);
-					setLocationPath(route.path);
-					setRouteElement(route.element);
-				}
+				let context = force ? { base } : { base, element: elementRef.current };
+				let routeElement = createRouteElement(routes, locationPath, context);
+				setElement(routeElement);
 			};
 
 			return result;
-		}, [locationPath]);
+		}, [locationPath, elementRef]);
 
 		let history = useMemo(() => {
 			return {
@@ -163,11 +163,12 @@ export default function Routes(...args) {
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
 
-						let target = Path.resolve(locationPath, `${path}`);
-						if (target !== locationPath) {
-							let route = createRoute(routes, target, base);
-							setLocationPath(route.path);
-							setRouteElement(route.element);
+						let target = Path.resolve(locationPathRef.current, `${path}`);
+						if (target !== locationPathRef.current) {
+							let context = { base, element: elementRef.current };
+							let routeElement = createRouteElement(routes, target, context);
+							setElement(routeElement);
+							setLocationPath(routeElement?.props.path ?? target);
 						}
 					}
 
@@ -203,13 +204,7 @@ export default function Routes(...args) {
 					}
 				},
 			};
-		}, [locationPath, historyLength, historyState, transition]);
-
-		// Latest location is needed in popstate handler, which we only want to add as an event listener once
-		let locationPathRef = useRef();
-		useEffect(() => {
-			locationPathRef.current = locationPath;
-		});
+		}, [historyLength, historyState, transition, elementRef, locationPathRef]);
 
 		// Subscribe to popstate events
 		useEffect(() => {
@@ -221,9 +216,10 @@ export default function Routes(...args) {
 
 				let path = calculatePath(rootLocation);
 				if (path !== locationPathRef.current) {
-					let route = createRoute(routes, path, '/');
-					setLocationPath(route.path);
-					setRouteElement(route.element);
+					let context = { base: '/', element: elementRef.current };
+					let routeElement = createRouteElement(routes, path, context);
+					setElement(routeElement);
+					setLocationPath(routeElement?.props.path ?? path);
 				}
 			}
 
@@ -232,7 +228,7 @@ export default function Routes(...args) {
 			return function () {
 				rootWindow?.removeEventListener?.('popstate', handler);
 			};
-		}, []);
+		}, [locationPathRef, elementRef]);
 
 		// Update history length state because we could not know it in advance
 		// as a popstate could be fired to a history item in the middle of the stack
@@ -257,7 +253,7 @@ export default function Routes(...args) {
 		return (
 			<LocationContext.Provider value={location}>
 				<HistoryContext.Provider value={history}>
-					<PendingContext.Provider value={pending}>{routeElement}</PendingContext.Provider>
+					<PendingContext.Provider value={pending}>{element}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);
