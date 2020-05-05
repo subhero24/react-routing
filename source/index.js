@@ -125,31 +125,13 @@ export default function Routes(...args) {
 		let history = useMemo(() => {
 			return {
 				go: function (delta) {
-					if (!rootHistory && process.env.NODE_ENV === 'development') {
-						console.warn(
-							`History.go can not be executed without a history. Please specify a history in the react-sprout options.`,
-						);
-					} else if (rootHistory) {
-						rootHistory?.go(delta);
-					}
+					rootHistory.go(delta);
 				},
 				back: function () {
-					if (!rootHistory && process.env.NODE_ENV === 'development') {
-						console.warn(
-							`History.back can not be executed without a history. Please specify a history in the react-sprout options.`,
-						);
-					} else if (rootHistory) {
-						rootHistory?.back();
-					}
+					rootHistory.back();
 				},
 				forward: function () {
-					if (!rootHistory && process.env.NODE_ENV === 'development') {
-						console.warn(
-							`History.forward can not be executed without a history. Please specify a history in the react-sprout options.`,
-						);
-					} else if (rootHistory) {
-						rootHistory.forward();
-					}
+					rootHistory.forward();
 				},
 				pushState: function (state, title, path = '.') {
 					this.navigate(path, { state, title, replace: false });
@@ -185,23 +167,10 @@ export default function Routes(...args) {
 					return historyLength;
 				},
 				get scrollRestoration() {
-					if (!rootHistory && process.env.NODE_ENV === 'development') {
-						console.warn(
-							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
-						);
-					} else if (rootHistory) {
-						return rootHistory.scrollRestoration;
-					}
-					return false;
+					return rootHistory.scrollRestoration;
 				},
 				set scrollRestoration(scroll) {
-					if (!rootHistory && process.env.NODE_ENV === 'development') {
-						console.warn(
-							`History.scrollRestoration is not available without a history. Please specify a history in the react-sprout options.`,
-						);
-					} else if (rootHistory) {
-						rootHistory.scrollRestoration = scroll;
-					}
+					rootHistory.scrollRestoration = scroll;
 				},
 			};
 		}, [historyLength, historyState, transition, elementRef, locationPathRef]);
