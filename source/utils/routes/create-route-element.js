@@ -10,7 +10,7 @@ import interpolate from '../paths/interpolate-path';
 import createResource from '../create-resource';
 
 function Route(props) {
-	let { params, splat, resource, render: Component, children } = props;
+	let { params, splat, resource, render: RenderComponent, props: renderProps, children } = props;
 
 	// The ChildContext is used for the <Child /> component, to know what children to render.
 	// So we set children on context, even though they are passed as the children of Component.
@@ -23,7 +23,7 @@ function Route(props) {
 			<ParamsContext.Provider value={params}>
 				<SplatContext.Provider value={splat}>
 					<ChildContext.Provider value={children}>
-						<Component>{children}</Component>
+						<RenderComponent {...renderProps}>{children}</RenderComponent>
 					</ChildContext.Provider>
 				</SplatContext.Provider>
 			</ParamsContext.Provider>
@@ -81,11 +81,14 @@ function createRouteElement(routes, path, context = {}) {
 			let pathname = Path.join(context.base, path);
 			let matched = pathname.slice(0, match.length);
 			let unmatched = pathname.slice(match.length);
+
+			let props = {};
+			let splat = match.splat;
 			let params = { ...context.params, ...match.params };
 
 			let render = route.render;
 			if (render === Redirect) {
-				let targetPath = interpolate(route.redirect, params, match.splat);
+				let targetPath = interpolate(route.redirect, params, splat);
 				let targetBase = Path.join(context.base, targetPath);
 				throw new RedirectError(targetBase);
 			}
@@ -130,7 +133,15 @@ function createRouteElement(routes, path, context = {}) {
 			// We need the data prop even though we don't use it in render, but we need it to compare
 			// in the next createRouteElement with the new data function to prevent fetching the data again
 			let element = (
-				<Route path={path} params={params} splat={match.splat} data={data} resource={resource} render={render}>
+				<Route
+					path={path}
+					params={params}
+					splat={splat}
+					data={data}
+					resource={resource}
+					render={render}
+					props={props}
+				>
 					{childRoute}
 				</Route>
 			);
