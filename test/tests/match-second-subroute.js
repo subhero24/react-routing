@@ -25,7 +25,7 @@ Test(function () {
 
 	let location = '/parent/childB';
 
-	let Router = Routes({ location }, routes);
+	let Router = Routes(routes, { location });
 
 	let render;
 	Renderer.act(function () {

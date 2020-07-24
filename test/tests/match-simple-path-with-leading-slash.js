@@ -11,7 +11,7 @@ Test(function () {
 	let routes = <Route path="/a" />;
 	let location = '/a';
 
-	let Router = Routes({ location }, routes);
+	let Router = Routes(routes, { location });
 
 	let render;
 	Renderer.act(function () {

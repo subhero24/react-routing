@@ -15,7 +15,7 @@ Test(function () {
 	let routes = <Route path="users/:id" />;
 	let location = '/users/id';
 
-	let Router = Routes({ location }, routes);
+	let Router = Routes(routes, { location });
 
 	let render;
 	Renderer.act(function () {

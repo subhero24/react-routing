@@ -19,7 +19,7 @@ Test(function () {
 	);
 	let location = '/a/1/x/y/z';
 
-	let Router = Routes({ location }, routes);
+	let Router = Routes(routes, { location });
 
 	let render;
 	Renderer.act(function () {

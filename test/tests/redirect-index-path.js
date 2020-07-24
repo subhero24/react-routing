@@ -17,7 +17,7 @@ Test(function () {
 	);
 	let location = '/a/';
 
-	let Router = Routes({ location }, routes);
+	let Router = Routes(routes, { location });
 
 	let render;
 	Renderer.act(function () {
