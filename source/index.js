@@ -29,10 +29,7 @@ if (useTransition == undefined) {
 	};
 }
 
-export default function Routes(...args) {
-	let routes = args.pop() ?? [];
-	let options = args.pop() ?? {};
-
+export default function Routes(routes, options = {}) {
 	let { location, history, document, base = '/' } = options;
 
 	let rootWindow;
@@ -92,6 +89,7 @@ export default function Routes(...args) {
 		// when issues have been resolved
 		// https://github.com/facebook/react/issues/18599
 		// https://github.com/facebook/react/issues/18595
+
 		let { timeoutMs = 4000 } = props;
 
 		let [action, setAction] = useState(REPLACE);
@@ -217,7 +215,9 @@ export default function Routes(...args) {
 		// Do not render children before subscription to popstate event
 		// as a child could navigate in its useEffect on mount, and this will
 		// be executed before the popstate subscription effect
-		if (!mounted) return null;
+
+		// This should only happen if the location was not given for server side rendering
+		if (!mounted && location == undefined) return null;
 
 		return (
 			<LocationContext.Provider value={location}>

@@ -499,14 +499,15 @@ ReactDom.createRoot(document.body).render(<Application />)
 
 ## Router options
 
-When creating the router, you could also pass an options object as the first argument. The following options can be used:
+When creating the router, you could also pass an options object as the second argument. The following options can be used:
 
 -   location: the initial location of the router, defaults to the browser's current location. Can be used for server side rendering, to set the path to the location of the incoming request.
 -   base: the part of the location pathname that should not be included in the path matching. Can be used if you want your application in a subroute without changing your router paths.
 
 ```javascript
-const Router = Routes({ location: 'application/a/static/path', base: 'application' }, 
-  <Component path="a/static/path" />
+const Router = Routes(
+  <Component path="a/static/path" />,
+  { location: 'application/a/static/path', base: 'application' }
 );
 ```
 
