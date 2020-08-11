@@ -80,8 +80,7 @@ export default function Routes(routes, options = {}) {
 	}
 
 	routes = preprocessRoutes(routes);
-
-	let path = calculatePath(rootLocation);
+	let path = rootLocation.pathname;
 	let routeElement = createRouteElement(routes, path, { base });
 
 	return function Router(props) {
@@ -181,7 +180,7 @@ export default function Routes(routes, options = {}) {
 				setHistoryLength(rootHistory?.length);
 				setDocumentTitle(rootDocument?.title);
 
-				let path = calculatePath(rootLocation);
+				let path = rootLocation.pathname;
 				if (path !== locationPathRef.current) {
 					let context = { base: '/', element: elementRef.current };
 					let routeElement = createRouteElement(routes, path, context);
