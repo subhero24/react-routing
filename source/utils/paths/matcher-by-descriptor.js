@@ -8,7 +8,10 @@ export default function matcherByDescriptor(descriptor) {
 		let paramNames = [];
 		let paramValues = [];
 
-		let pathParts = Path.join(base, path).split('/');
+		// Using URL to find the pathname part does not work when
+		// path is the empty string. Then the result becomes "/" instead of ""
+		let pathName = path.split('?')[0];
+		let pathParts = Path.join(base, pathName).split('/');
 		let descriptorParts = Path.join(base, descriptor).split('/');
 
 		while (descriptorParts.length) {

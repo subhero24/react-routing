@@ -4,7 +4,7 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useRef, useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
+import { useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
 
 import useLatestRef from './hooks/use-latest-ref';
 
@@ -47,7 +47,7 @@ export default function Routes(routes, options = {}) {
 				rootLocation = new URL(location);
 			} catch (error) {
 				try {
-					rootLocation = new URL(Path.join('http://localhost/', location));
+					rootLocation = new URL(location, 'http://localhost/');
 				} catch (localhostError) {
 					throw error;
 				}
@@ -80,7 +80,7 @@ export default function Routes(routes, options = {}) {
 	}
 
 	routes = preprocessRoutes(routes);
-	let path = rootLocation.pathname;
+	let path = calculatePath(rootLocation);
 	let routeElement = createRouteElement(routes, path, { base });
 
 	return function Router(props) {
@@ -109,7 +109,7 @@ export default function Routes(routes, options = {}) {
 
 			// Could not figure out a way to copy the properties of the above URL object to my own object,
 			// as all the properties are defined on its prototype. So instead of returning another object
-			// with the same props, we will add the location functions to result, and return result.
+			// with the same props, we will add the location functions like "reload" to result, and return that.
 			result.reload = function (force) {
 				let context = force ? { base } : { base, element: elementRef.current };
 				let routeElement = createRouteElement(routes, locationPath, context);
@@ -180,7 +180,7 @@ export default function Routes(routes, options = {}) {
 				setHistoryLength(rootHistory?.length);
 				setDocumentTitle(rootDocument?.title);
 
-				let path = rootLocation.pathname;
+				let path = calculatePath(rootLocation);
 				if (path !== locationPathRef.current) {
 					let context = { base: '/', element: elementRef.current };
 					let routeElement = createRouteElement(routes, path, context);
@@ -196,12 +196,6 @@ export default function Routes(routes, options = {}) {
 			};
 		}, [locationPathRef, elementRef]);
 
-		// Update history length state because we could not know it in advance
-		// as a popstate could be fired to a history item in the middle of the stack
-		useLayoutEffect(() => {
-			setHistoryLength(rootHistory?.length);
-		}, [setHistoryLength]);
-
 		// If component did render with updated location/history, update the browsers history
 		useLayoutEffect(() => {
 			if (action === PUSH) {
@@ -209,14 +203,17 @@ export default function Routes(routes, options = {}) {
 			} else if (action === REPLACE) {
 				rootHistory?.replaceState?.(historyState, documentTitle, locationPath);
 			}
+			setHistoryLength(rootHistory?.length);
 		}, [action, historyState, documentTitle, locationPath]);
 
 		// Do not render children before subscription to popstate event
 		// as a child could navigate in its useEffect on mount, and this will
 		// be executed before the popstate subscription effect
 
+		// Maybe navigating in useEffect is bad practice and this is not needed?
+
 		// This should only happen if the location was not given for server side rendering
-		if (!mounted && location == undefined) return null;
+		if (!mounted && options.location == undefined) return null;
 
 		return (
 			<LocationContext.Provider value={location}>
