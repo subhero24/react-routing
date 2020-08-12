@@ -8,7 +8,8 @@
 	"scripts": {
 		"lint": "eslint source",
 		"test": "BABEL_ENV=debug node -r esm -r @babel/register test/run.js",
-		"build": "roller"
+		"build": "roller",
+		"develop": "roller --watch"
 	},
 	"keywords": [
 		"react",
