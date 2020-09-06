@@ -95,7 +95,7 @@ function createRouteElement(routes, path, context = {}) {
 
 			let data = route.data;
 			// Prevent the same data to be fetched when the component is already mounted,
-			// by checking the previous rendered element's data and params
+			// by checking the previous rendered element's data, params and splat
 			// We can not use useMemo inside the Route element as it does not survive a suspend
 			let resource;
 			let isSameComponent = context.element?.props.render === render;
@@ -104,14 +104,17 @@ function createRouteElement(routes, path, context = {}) {
 				if (isSameDataFn) {
 					let isSameParams = equalParams(context.element.props.params, params);
 					if (isSameParams) {
-						resource = context.element.props.resource;
+						let isSameSplat = equalSplat(context.element.props.splat, splat);
+						if (isSameSplat) {
+							resource = context.element.props.resource;
+						}
 					}
 				}
 			}
 
 			if (resource == undefined) {
 				if (typeof data === 'function') {
-					resource = createResource(data(params));
+					resource = createResource(data(params, splat));
 				} else if (data !== undefined) {
 					resource = createResource(Promise.resolve(data));
 				}
@@ -160,4 +163,16 @@ function equalParams(paramsA, paramsB) {
 	if (propsA.length !== propsB.length) return false;
 
 	return propsA.every(prop => paramsA[prop] === paramsB[prop]);
+}
+
+function equalSplat(splatA, splatB) {
+	if (splatA.length !== splatB.length) return false;
+
+	for (let index = 0; index < splatA.length; ++index) {
+		if (splatA[index] !== splatB[index]) {
+			return false;
+		}
+	}
+
+	return true;
 }
