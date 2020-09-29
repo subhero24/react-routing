@@ -4,7 +4,7 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useEffect, useLayoutEffect } from 'react';
+import { useMemo, useState, useEffect, useTransition, useLayoutEffect } from 'react';
 import { unstable_useTransition } from 'react';
 
 import useLatestRef from './hooks/use-latest-ref';
@@ -18,9 +18,12 @@ const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
 // Mock useTransition to support React versions without useTransition
-let useTransition = unstable_useTransition;
-if (useTransition == undefined) {
-	useTransition = function () {
+let useIsomorphicTransition = unstable_useTransition ?? useTransition;
+if (useIsomorphicTransition == undefined) {
+	console.warn(
+		'React useTransition is not defined. Falling back to transitions without Suspense. Please use a version of React that supports transitions to do sticky navigations.',
+	);
+	useIsomorphicTransition = function () {
 		let pending = false;
 		let transition = function (execute) {
 			execute();
@@ -95,7 +98,9 @@ export default function Routes(routes, options = {}) {
 		let [action, setAction] = useState(REPLACE);
 		let [mounted, setMounted] = useState(false);
 		let [element, setElement] = useState(routeElement);
-		let [transition, pending] = useTransition({ timeoutMs });
+		let [transition, pending] = useIsomorphicTransition({ timeoutMs });
+
+		console.log(pending);
 
 		let [locationPath, setLocationPath] = useState(routeElement?.props.path);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
