@@ -4,7 +4,8 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useEffect, useTransition as useReactTransition, useLayoutEffect } from 'react';
+import { useMemo, useState, useEffect, useLayoutEffect } from 'react';
+import { unstable_useTransition } from 'react';
 
 import useLatestRef from './hooks/use-latest-ref';
 
@@ -17,7 +18,7 @@ const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
 // Mock useTransition to support React versions without useTransition
-let useTransition = useReactTransition;
+let useTransition = unstable_useTransition;
 if (useTransition == undefined) {
 	useTransition = function () {
 		let pending = false;

@@ -31,13 +31,13 @@
 		"eslint-plugin-react-hooks": "^3.0.0",
 		"esm": "^3.2.25",
 		"path": "^0.12.7",
-		"react": "0.0.0-experimental-e5d06e34b",
-		"react-dom": "0.0.0-experimental-e5d06e34b",
+		"react": "0.0.0-experimental-94c0244ba",
+		"react-dom": "0.0.0-experimental-94c0244ba",
 		"react-test-renderer": "^16.13.1",
 		"roller-bundler": "0.0.2"
 	},
 	"dependencies": {},
 	"peerDependencies": {
-		"react": "*"
+		"react": "0.0.0-experimental-94c0244ba"
 	}
 }
