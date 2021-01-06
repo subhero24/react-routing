@@ -1,4 +1,4 @@
-import Path from 'path';
+import Url from 'url';
 import React from 'react';
 import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
@@ -100,8 +100,6 @@ export default function Routes(routes, options = {}) {
 		let [element, setElement] = useState(routeElement);
 		let [transition, pending] = useIsomorphicTransition({ timeoutMs });
 
-		console.log(pending);
-
 		let [locationPath, setLocationPath] = useState(routeElement?.props.path);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
 		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
@@ -148,7 +146,7 @@ export default function Routes(routes, options = {}) {
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
 
-						let target = Path.resolve(locationPathRef.current, `${path}`);
+						let target = Url.resolve(locationPathRef.current, `${path}`);
 						if (target !== locationPathRef.current) {
 							let context = { base, element: elementRef.current };
 							let routeElement = createRouteElement(routes, target, context);
