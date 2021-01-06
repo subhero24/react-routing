@@ -1,4 +1,4 @@
-import Path from 'path';
+import Url from 'url';
 import React from 'react';
 import useLocation from '../hooks/use-location';
 import useNavigate from '../hooks/use-navigate';
@@ -11,7 +11,7 @@ export default forwardRef(function Link(props, ref) {
 	let location = useLocation();
 	let navigate = useNavigate();
 
-	let href = Path.resolve(location.pathname, `${to}`);
+	let href = Url.resolve(location.pathname, `${to}`);
 
 	function handleClick(event) {
 		if (onClick) onClick(event);
