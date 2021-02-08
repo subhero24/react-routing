@@ -134,10 +134,10 @@ export default function Routes(routes, options = {}) {
 				forward: function () {
 					rootHistory.forward();
 				},
-				pushState: function (state, title, path = '.') {
+				pushState: function (state, title, path) {
 					this.navigate(path, { state, title, replace: false });
 				},
-				replaceState: function (state, title, path = '.') {
+				replaceState: function (state, title, path) {
 					this.navigate(path, { state, title, replace: true });
 				},
 				navigate: function (path, options = {}) {
@@ -146,12 +146,15 @@ export default function Routes(routes, options = {}) {
 						if (options.state != undefined) setHistoryState(options.state);
 						if (options.title != undefined) setDocumentTitle(options.title);
 
-						let target = Url.resolve(locationPathRef.current, `${path}`);
-						if (target !== locationPathRef.current) {
-							let context = { base, element: elementRef.current };
-							let routeElement = createRouteElement(routes, target, context);
-							setElement(routeElement);
-							setLocationPath(routeElement?.props.path ?? target);
+						if (path) {
+							// Convert path to string just in case
+							let target = Url.resolve(locationPathRef.current, `${path}`);
+							if (target !== locationPathRef.current) {
+								let context = { base, element: elementRef.current };
+								let routeElement = createRouteElement(routes, target, context);
+								setElement(routeElement);
+								setLocationPath(routeElement?.props.path ?? target);
+							}
 						}
 					}
 
