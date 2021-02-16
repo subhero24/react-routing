@@ -1,19 +1,18 @@
-import Test from '../test';
 import React from 'react';
-import Routes from '../../source/index.js';
+import Routes from '../source/index.js';
 import Renderer from 'react-test-renderer';
 
-import useParams from '../../source/hooks/use-params';
+import { test } from 'uvu';
 
-function RouteA(props) {
-	return props.children;
-}
+test('Match nested params', function () {
+	function RouteA(props) {
+		return props.children;
+	}
 
-function RouteB() {
-	return null;
-}
+	function RouteB() {
+		return null;
+	}
 
-Test(function () {
 	let routes = (
 		<RouteA path=":a">
 			<RouteB path=":b" />
@@ -29,6 +28,9 @@ Test(function () {
 	});
 
 	let result = render.toTree();
-	if (result.rendered.rendered.rendered.props.params.a === undefined)
+	if (result.rendered.rendered.rendered.props.params.a === undefined) {
 		throw new Error('The parent param was not found');
+	}
 });
+
+test.run();

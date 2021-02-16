@@ -7,7 +7,7 @@
 	"source": "index.js",
 	"scripts": {
 		"lint": "eslint source",
-		"test": "BABEL_ENV=debug node -r esm -r @babel/register test/run.js",
+		"test": "",
 		"build": "roller",
 		"develop": "roller --watch"
 	},
@@ -20,11 +20,12 @@
 	"author": "Bruno Van Damme",
 	"license": "MIT",
 	"devDependencies": {
-		"@babel/core": "^7.9.0",
+		"@babel/core": "^7.12.16",
+		"@babel/node": "^7.12.16",
 		"@babel/plugin-transform-runtime": "^7.9.0",
 		"@babel/preset-env": "^7.9.5",
 		"@babel/preset-react": "^7.9.4",
-		"@babel/register": "^7.9.0",
+		"@babel/register": "^7.12.13",
 		"babel-eslint": "^10.1.0",
 		"eslint": "^6.8.0",
 		"eslint-plugin-react": "^7.19.0",
@@ -35,7 +36,8 @@
 		"react-dom": "0.0.0-experimental-94c0244ba",
 		"react-test-renderer": "^16.13.1",
 		"roller-bundler": "0.0.2",
-		"url": "^0.11.0"
+		"url": "^0.11.0",
+		"uvu": "^0.5.1"
 	},
 	"dependencies": {},
 	"peerDependencies": {

@@ -4,16 +4,18 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useEffect, useTransition, useLayoutEffect } from 'react';
 import { unstable_useTransition } from 'react';
+import { useMemo, useState, useTransition, useLayoutEffect } from 'react';
 
-import useLatestRef from './hooks/use-latest-ref';
+import useMounted from './hooks/use-mounted.js';
+import useLatestRef from './hooks/use-latest-ref.js';
+import useEventListener from './hooks/use-event-listener.js';
+import useImmutableCallback from './hooks/use-immutable-callback.js';
 
 import calculatePath from './utils/paths/calculate-path';
 import preprocessRoutes from './utils/routes/preprocess';
 import createRouteElement from './utils/routes/create-route-element';
 
-const POP = 'POP';
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
@@ -95,33 +97,90 @@ export default function Routes(routes, options = {}) {
 
 		let { timeoutMs = 4000 } = props;
 
-		let [action, setAction] = useState(REPLACE);
-		let [mounted, setMounted] = useState(false);
+		let mounted = useMounted();
 		let [element, setElement] = useState(routeElement);
 		let [transition, pending] = useIsomorphicTransition({ timeoutMs });
 
+		let [action, setAction] = useState();
 		let [locationPath, setLocationPath] = useState(routeElement?.props.path);
 		let [historyState, setHistoryState] = useState(rootHistory?.state);
 		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
 		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
 
-		let elementRef = useLatestRef(element);
-		let locationPathRef = useLatestRef(locationPath);
-
+		let locationUrlRef = useLatestRef(useMemo(() => new URL(locationPath, rootLocation.origin), [locationPath]));
+		let locationReload = useImmutableCallback(function () {
+			setElement(createRouteElement(routes, locationPath, { base }));
+		});
 		let location = useMemo(() => {
-			let result = new URL(locationPath, rootLocation.origin);
-
-			// Could not figure out a way to copy the properties of the above URL object to my own object,
-			// as all the properties are defined on its prototype. So instead of returning another object
-			// with the same props, we will add the location functions like "reload" to result, and return that.
-			result.reload = function (force) {
-				let context = force ? { base } : { base, element: elementRef.current };
-				let routeElement = createRouteElement(routes, locationPath, context);
-				setElement(routeElement);
+			return {
+				reload: locationReload,
+				get href() {
+					return locationUrlRef.current.href;
+				},
+				get hash() {
+					return locationUrlRef.current.hash;
+				},
+				get host() {
+					return locationUrlRef.current.host;
+				},
+				get port() {
+					return locationUrlRef.current.port;
+				},
+				// read-only
+				get origin() {
+					return locationUrlRef.current.origin;
+				},
+				get search() {
+					return locationUrlRef.current.search;
+				},
+				get protocol() {
+					return locationUrlRef.current.protocol;
+				},
+				get password() {
+					return locationUrlRef.current.password;
+				},
+				get username() {
+					return locationUrlRef.current.username;
+				},
+				get pathname() {
+					return locationUrlRef.current.pathname;
+				},
+				get hostname() {
+					return locationUrlRef.current.hostname;
+				},
+				// read-only
+				get searchParams() {
+					return locationUrlRef.current.searchParams;
+				},
 			};
+		}, [locationUrlRef, locationReload]);
 
-			return result;
-		}, [locationPath, elementRef]);
+		let historyStateRef = useLatestRef(historyState);
+		let historyLengthRef = useLatestRef(historyLength);
+		let historyNavigate = useImmutableCallback(function (path, options = {}) {
+			function executeNavigation() {
+				setAction({ type: options.replace ? REPLACE : PUSH });
+				if (options.state != undefined) setHistoryState(options.state);
+				if (options.title != undefined) setDocumentTitle(options.title);
+
+				if (path) {
+					// Convert path to string just in case
+					let target = Url.resolve(locationPath, `${path}`);
+					if (target !== locationPath) {
+						let context = { base, element };
+						let routeElement = createRouteElement(routes, target, context);
+						setElement(routeElement);
+						setLocationPath(routeElement?.props.path ?? target);
+					}
+				}
+			}
+
+			if (options.sticky) {
+				transition(executeNavigation);
+			} else {
+				executeNavigation();
+			}
+		});
 
 		let history = useMemo(() => {
 			return {
@@ -140,35 +199,12 @@ export default function Routes(routes, options = {}) {
 				replaceState: function (state, title, path) {
 					this.navigate(path, { state, title, replace: true });
 				},
-				navigate: function (path, options = {}) {
-					function executeNavigation() {
-						setAction(options.replace ? REPLACE : PUSH);
-						if (options.state != undefined) setHistoryState(options.state);
-						if (options.title != undefined) setDocumentTitle(options.title);
-
-						if (path) {
-							// Convert path to string just in case
-							let target = Url.resolve(locationPathRef.current, `${path}`);
-							if (target !== locationPathRef.current) {
-								let context = { base, element: elementRef.current };
-								let routeElement = createRouteElement(routes, target, context);
-								setElement(routeElement);
-								setLocationPath(routeElement?.props.path ?? target);
-							}
-						}
-					}
-
-					if (options.sticky) {
-						transition(executeNavigation);
-					} else {
-						executeNavigation();
-					}
-				},
+				navigate: historyNavigate,
 				get state() {
-					return historyState;
+					return historyStateRef.current;
 				},
 				get length() {
-					return historyLength;
+					return historyLengthRef.current;
 				},
 				get scrollRestoration() {
 					return rootHistory.scrollRestoration;
@@ -177,37 +213,26 @@ export default function Routes(routes, options = {}) {
 					rootHistory.scrollRestoration = scroll;
 				},
 			};
-		}, [historyLength, historyState, transition, elementRef, locationPathRef]);
+		}, [historyStateRef, historyLengthRef, historyNavigate]);
 
-		// Subscribe to popstate events
-		useEffect(() => {
-			function handler() {
-				setAction(POP);
-				setHistoryState(rootHistory?.state);
-				setHistoryLength(rootHistory?.length);
-				setDocumentTitle(rootDocument?.title);
+		useEventListener(rootWindow, 'popstate', function () {
+			setHistoryState(rootHistory?.state);
+			setHistoryLength(rootHistory?.length);
+			setDocumentTitle(rootDocument?.title);
 
-				let path = calculatePath(rootLocation);
-				if (path !== locationPathRef.current) {
-					let context = { base: '/', element: elementRef.current };
-					let routeElement = createRouteElement(routes, path, context);
-					setElement(routeElement);
-					setLocationPath(routeElement?.props.path ?? path);
-				}
+			let path = calculatePath(rootLocation);
+			if (path !== locationPath) {
+				let routeElement = createRouteElement(routes, path, { base: '/', element });
+				setElement(routeElement);
+				setLocationPath(routeElement?.props.path ?? path);
 			}
-
-			setMounted(true);
-			rootWindow?.addEventListener?.('popstate', handler);
-			return function () {
-				rootWindow?.removeEventListener?.('popstate', handler);
-			};
-		}, [locationPathRef, elementRef]);
+		});
 
 		// If component did render with updated location/history, update the browsers history
 		useLayoutEffect(() => {
-			if (action === PUSH) {
+			if (action?.type === PUSH) {
 				rootHistory?.pushState?.(historyState, documentTitle, locationPath);
-			} else if (action === REPLACE) {
+			} else if (action?.type === REPLACE) {
 				rootHistory?.replaceState?.(historyState, documentTitle, locationPath);
 			}
 			setHistoryLength(rootHistory?.length);

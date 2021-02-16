@@ -6,6 +6,7 @@ import SplatContext from '../../contexts/splat';
 import ParamsContext from '../../contexts/params';
 import ResourceContext from '../../contexts/resource';
 
+import stripHash from '../paths/strip-hash';
 import interpolate from '../paths/interpolate-path';
 import createResource from '../create-resource';
 
@@ -75,7 +76,7 @@ function createRouteElement(routes, path, context = {}) {
 
 	for (let route of routes) {
 		let strict = route.routes == undefined;
-		let match = route.path(path, context.base, strict);
+		let match = route.path(stripHash(path), context.base, strict);
 
 		if (match) {
 			let pathname = Path.join(context.base, path);
