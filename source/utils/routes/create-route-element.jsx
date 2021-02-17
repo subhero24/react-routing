@@ -1,4 +1,3 @@
-import Path from 'path';
 import React from 'react';
 import Redirect from '../../components/redirect';
 import ChildContext from '../../contexts/child';
@@ -9,6 +8,8 @@ import ResourceContext from '../../contexts/resource';
 import stripHash from '../paths/strip-hash';
 import interpolate from '../paths/interpolate-path';
 import createResource from '../create-resource';
+
+import { join, relative } from 'path';
 
 function Route(props) {
 	let { params, splat, resource, render: RenderComponent, props: renderProps, children } = props;
@@ -51,7 +52,7 @@ export default function createRootRouteElement(routes, path, { base = '/', eleme
 		} catch (error) {
 			if (error instanceof RedirectError) {
 				// We update the path to the new location
-				path = Path.join('/', Path.relative(base, error.to));
+				path = join('/', relative(base, error.to));
 
 				// Before continuing to render with the new path, we check for infinite redirect loops
 				if (redirects.includes(path)) {
@@ -79,7 +80,7 @@ function createRouteElement(routes, path, context = {}) {
 		let match = route.path(stripHash(path), context.base, strict);
 
 		if (match) {
-			let pathname = Path.join(context.base, path);
+			let pathname = join(context.base, path);
 			let matched = pathname.slice(0, match.length);
 			let unmatched = pathname.slice(match.length);
 
@@ -90,7 +91,7 @@ function createRouteElement(routes, path, context = {}) {
 			let render = route.render;
 			if (render === Redirect) {
 				let targetPath = interpolate(route.redirect, params, splat);
-				let targetBase = Path.join(context.base, targetPath);
+				let targetBase = join(context.base, targetPath);
 				throw new RedirectError(targetBase);
 			}
 
@@ -122,7 +123,7 @@ function createRouteElement(routes, path, context = {}) {
 			}
 
 			let childPath = unmatched;
-			let childBase = Path.join(context.base, matched);
+			let childBase = join(context.base, matched);
 			let childParams = params;
 			let childRoutes = route.routes;
 			let childElement = context.element?.props.children;
