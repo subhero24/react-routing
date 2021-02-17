@@ -6,7 +6,7 @@
 	"description": "A suspense ready react router",
 	"main": "./build/index.js",
 	"files": [
-		"dist"
+		"build"
 	],
 	"scripts": {
 		"lint": "eslint source",
