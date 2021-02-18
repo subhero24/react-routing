@@ -107,24 +107,58 @@ export default function Routes(routes, options = {}) {
 		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
 		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
 
-		let elementRef = useLatestRef(element);
-		let locationPathRef = useLatestRef(locationPath);
+		let locationReload = useImmutableCallback(function () {
+			setElement(createRouteElement(routes, locationPath, { base }));
+		});
 
 		let location = useMemo(() => {
-			let result = new URL(locationPath, rootLocation.origin);
+			let url = new URL(locationPath, rootLocation.origin);
 
-			// Could not figure out a way to copy the properties of the above URL object to my own object,
-			// as all the properties are defined on its prototype. So instead of returning another object
-			// with the same props, we will add the location functions like "reload" to result, and return that.
-			result.reload = function (force) {
-				let context = force ? { base } : { base, element: elementRef.current };
-				let routeElement = createRouteElement(routes, locationPath, context);
-				setElement(routeElement);
+			return {
+				reload: locationReload,
+				get href() {
+					return url.href;
+				},
+				get hash() {
+					return url.hash;
+				},
+				get host() {
+					return url.host;
+				},
+				get port() {
+					return url.port;
+				},
+				// read-only
+				get origin() {
+					return url.origin;
+				},
+				get search() {
+					return url.search;
+				},
+				get protocol() {
+					return url.protocol;
+				},
+				get password() {
+					return url.password;
+				},
+				get username() {
+					return url.username;
+				},
+				get pathname() {
+					return url.pathname;
+				},
+				get hostname() {
+					return url.hostname;
+				},
+				// read-only
+				get searchParams() {
+					return url.searchParams;
+				},
 			};
+		}, [locationPath]);
 
-			return result;
-		}, [locationPath, elementRef]);
-
+		let historyStateRef = useLatestRef(historyState);
+		let historyLengthRef = useLatestRef(historyLength);
 		let historyNavigate = useImmutableCallback(function (path, options = {}) {
 			function executeNavigation() {
 				let navigationPath;
@@ -179,10 +213,10 @@ export default function Routes(routes, options = {}) {
 				},
 				navigate: historyNavigate,
 				get state() {
-					return historyState;
+					return historyStateRef.current;
 				},
 				get length() {
-					return historyLength;
+					return historyLengthRef.current;
 				},
 				get scrollRestoration() {
 					return rootHistory.scrollRestoration;
@@ -191,7 +225,7 @@ export default function Routes(routes, options = {}) {
 					rootHistory.scrollRestoration = scroll;
 				},
 			};
-		}, [historyLength, historyState, transition, elementRef, locationPathRef]);
+		}, [historyStateRef, historyLengthRef]);
 
 		useEventListener(rootWindow, 'popstate', function () {
 			setHistoryState(rootHistory?.state);
@@ -225,9 +259,11 @@ export default function Routes(routes, options = {}) {
 		// This should only happen if the location was not given for server side rendering
 		if (!mounted && options.location == undefined) return null;
 
+		// We return a new object with the history, as history itself does not change,
+		// but components which use the history should nevertheless be updated
 		return (
 			<LocationContext.Provider value={location}>
-				<HistoryContext.Provider value={history}>
+				<HistoryContext.Provider value={{ history }}>
 					<PendingContext.Provider value={pending}>{element}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>

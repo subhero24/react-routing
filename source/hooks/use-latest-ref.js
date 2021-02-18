@@ -5,9 +5,10 @@ export default function useLatestRef(value) {
 	// happen in callbacks, after useEffect has already run
 	let ref = useRef();
 
-	useEffect(() => {
-		ref.current = value;
-	});
+	ref.current = value;
+	// useEffect(() => {
+	// 	ref.current = value;
+	// });
 
 	return ref;
 }
