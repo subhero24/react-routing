@@ -1,7 +1,7 @@
 import Test from '../test';
 import React from 'react';
 import Routes from '../../source/index.js';
-import Redirect from '../../source/components/redirect.js';
+import Redirect from '../../source/components/redirect.jsx';
 import Renderer from 'react-test-renderer';
 
 import { Fragment } from 'react';

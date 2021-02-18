@@ -1,13 +1,17 @@
-import Path from 'path';
 import React from 'react';
-import Redirect from '../../components/redirect';
-import ChildContext from '../../contexts/child';
-import SplatContext from '../../contexts/splat';
-import ParamsContext from '../../contexts/params';
-import ResourceContext from '../../contexts/resource';
 
-import interpolate from '../paths/interpolate-path';
-import createResource from '../create-resource';
+import Path from '../../libs/path.js';
+
+import ChildContext from '../../contexts/child.js';
+import SplatContext from '../../contexts/splat.js';
+import ParamsContext from '../../contexts/params.js';
+import ResourceContext from '../../contexts/resource.js';
+
+import Redirect from '../../components/redirect.jsx';
+
+import stripHash from '../paths/strip-hash.js';
+import interpolate from '../paths/interpolate-path.js';
+import createResource from '../create-resource.js';
 
 function Route(props) {
 	let { params, splat, resource, render: RenderComponent, props: renderProps, children } = props;
@@ -75,7 +79,7 @@ function createRouteElement(routes, path, context = {}) {
 
 	for (let route of routes) {
 		let strict = route.routes == undefined;
-		let match = route.path(path, context.base, strict);
+		let match = route.path(stripHash(path), context.base, strict);
 
 		if (match) {
 			let pathname = Path.join(context.base, path);

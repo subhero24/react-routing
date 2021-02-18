@@ -1,4 +1,4 @@
-import Path from 'path';
+import Path from '../../libs/path.js';
 
 export default function matcherByDescriptor(descriptor) {
 	return function (path, base, strict) {

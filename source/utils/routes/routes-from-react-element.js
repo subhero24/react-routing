@@ -1,7 +1,6 @@
-import Redirect from '../../components/redirect';
+import Redirect from '../../components/redirect.jsx';
 
-import { Children, Fragment } from 'react';
-import { isValidElement } from 'react';
+import { Children, Fragment, isValidElement } from 'react';
 
 export default function createRoutesFromReactElement(element) {
 	if (element == undefined) {
