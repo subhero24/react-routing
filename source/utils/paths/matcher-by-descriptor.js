@@ -1,4 +1,4 @@
-import { join } from 'path';
+import Path from '../../libs/path.js';
 
 export default function matcherByDescriptor(descriptor) {
 	return function (path, base, strict) {
@@ -11,8 +11,8 @@ export default function matcherByDescriptor(descriptor) {
 		// Using URL to find the pathname part does not work when
 		// path is the empty string. Then the result becomes "/" instead of ""
 		let pathName = path.split('?')[0];
-		let pathParts = join(base, pathName).split('/');
-		let descriptorParts = join(base, descriptor).split('/');
+		let pathParts = Path.join(base, pathName).split('/');
+		let descriptorParts = Path.join(base, descriptor).split('/');
 
 		while (descriptorParts.length) {
 			let descriptorPart = descriptorParts.shift();

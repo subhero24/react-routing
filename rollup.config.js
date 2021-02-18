@@ -8,7 +8,7 @@ export default [
 	{
 		input: 'source/index.js',
 		output: {
-			file: 'build/index.js',
+			file: 'build/index.mjs',
 			format: 'esm',
 			sourcemap: true,
 		},

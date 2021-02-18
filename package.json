@@ -1,10 +1,10 @@
 {
 	"name": "react-sprout",
-	"version": "0.0.23",
+	"version": "0.0.24",
 	"author": "Bruno Van Damme",
 	"license": "MIT",
 	"description": "A suspense ready react router",
-	"main": "./build/index.js",
+	"main": "build/index.mjs",
 	"files": [
 		"build"
 	],
@@ -19,14 +19,7 @@
 		"sprout",
 		"suspense"
 	],
-	"dependencies": {
-		"@babel/runtime": "^7.12.13"
-	},
-	"peerDependencies": {
-		"react": "0.0.0-experimental-94c0244ba"
-	},
 	"devDependencies": {
-		"@babel/cli": "^7.12.16",
 		"@babel/core": "^7.12.16",
 		"@babel/plugin-transform-react-jsx": "^7.12.16",
 		"@babel/plugin-transform-runtime": "^7.12.15",
@@ -37,11 +30,16 @@
 		"eslint": "^7.20.0",
 		"eslint-plugin-react": "^7.22.0",
 		"eslint-plugin-react-hooks": "^4.2.0",
-		"prettier": "^2.2.1",
 		"react": "0.0.0-experimental-94c0244ba",
 		"react-dom": "0.0.0-experimental-94c0244ba",
 		"rollup": "^2.39.0",
 		"rollup-plugin-node-builtins": "^2.1.2",
 		"rollup-plugin-terser": "^7.0.2"
+	},
+	"dependencies": {
+		"@babel/runtime": "^7.12.13"
+	},
+	"peerDependencies": {
+		"react": "0.0.0-experimental-94c0244ba"
 	}
 }

@@ -1,4 +1,4 @@
-import Redirect from '../../components/redirect';
+import Redirect from '../../components/redirect.jsx';
 
 import { Children, Fragment, isValidElement } from 'react';
 
