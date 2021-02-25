@@ -31,7 +31,7 @@
 		"eslint": "^7.20.0",
 		"eslint-plugin-react": "^7.22.0",
 		"eslint-plugin-react-hooks": "^4.2.0",
-		"react": "0.0.0-experimental-94c0244ba",
+		"react": "0.14.0",
 		"react-dom": "0.0.0-experimental-94c0244ba",
 		"rollup": "^2.39.0",
 		"rollup-plugin-node-polyfills": "^0.2.1",
@@ -39,6 +39,6 @@
 	},
 	"dependencies": {},
 	"peerDependencies": {
-		"react": "0.0.0-experimental-94c0244ba"
+		"react": "0.14.0"
 	}
 }
