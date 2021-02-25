@@ -96,28 +96,32 @@ function createRouteElement(routes, path, context = {}) {
 				throw new RedirectError(targetBase);
 			}
 
-			let data = route.data;
 			let resource;
-			// Prevent the same data to be fetched when the component is already mounted,
-			// by checking the previous rendered element's data, params and splat
-			// We can not use useMemo inside the Route element as it does not survive a suspend
-			let isSameComponent = context.element?.props.render === render;
-			if (isSameComponent) {
-				let isSameDataFn = context.element.props.data == data;
-				if (isSameDataFn) {
-					// We check if the data function uses one or two arguments
-					// to find out if params or splat changes are relevant to the data being fetched
-					// Otherwise splat or params can change while not used to fetch the data, so it can reuse the old resource
-					let ignoreSplat = data.length < 2;
-					let ignoreParams = data.length < 1;
-					if (ignoreParams || equalParams(context.element.props.params, params)) {
-						if (ignoreSplat || equalSplat(context.element.props.splat, splat)) {
-							resource = context.element.props.resource;
+			let data = route.data;
+			if (data) {
+				// Try to reuse the same resource.
+				// Prevent the same data to be fetched when the component is already mounted,
+				// by checking the previous rendered element's data, params and splat
+				// We can not use useMemo inside the Route element as it does not survive a suspend
+				let isSameComponent = context.element?.props.render === render;
+				if (isSameComponent) {
+					let isSameDataFn = context.element.props.data == data;
+					if (isSameDataFn) {
+						// We check if the data function uses one or two arguments
+						// to find out if params or splat changes are relevant to the data being fetched
+						// Otherwise splat or params can change while not used to fetch the data, so it can reuse the old resource
+						let ignoreSplat = data.length < 2;
+						let ignoreParams = data.length < 1;
+						if (ignoreParams || equalParams(context.element.props.params, params)) {
+							if (ignoreSplat || equalSplat(context.element.props.splat, splat)) {
+								resource = context.element.props.resource;
+							}
 						}
 					}
 				}
 			}
 
+			// If the previous resource was not used, create a new one
 			if (resource == undefined) {
 				if (typeof data === 'function') {
 					resource = createResource(data(params, splat));
