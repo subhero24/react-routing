@@ -1,6 +1,5 @@
+import Path from 'path';
 import React from 'react';
-
-import Path from '../../libs/path.js';
 
 import ChildContext from '../../contexts/child.js';
 import SplatContext from '../../contexts/splat.js';
@@ -98,18 +97,21 @@ function createRouteElement(routes, path, context = {}) {
 			}
 
 			let data = route.data;
+			let resource;
 			// Prevent the same data to be fetched when the component is already mounted,
 			// by checking the previous rendered element's data, params and splat
 			// We can not use useMemo inside the Route element as it does not survive a suspend
-			let resource;
 			let isSameComponent = context.element?.props.render === render;
 			if (isSameComponent) {
 				let isSameDataFn = context.element.props.data == data;
 				if (isSameDataFn) {
-					let isSameParams = equalParams(context.element.props.params, params);
-					if (isSameParams) {
-						let isSameSplat = equalSplat(context.element.props.splat, splat);
-						if (isSameSplat) {
+					// We check if the data function uses one or two arguments
+					// to find out if params or splat changes are relevant to the data being fetched
+					// Otherwise splat or params can change while not used to fetch the data, so it can reuse the old resource
+					let ignoreSplat = data.length < 2;
+					let ignoreParams = data.length < 1;
+					if (ignoreParams || equalParams(context.element.props.params, params)) {
+						if (ignoreSplat || equalSplat(context.element.props.splat, splat)) {
 							resource = context.element.props.resource;
 						}
 					}
@@ -170,6 +172,7 @@ function equalParams(paramsA, paramsB) {
 }
 
 function equalSplat(splatA, splatB) {
+	if (splatA === splatB) return true;
 	if (splatA.length !== splatB.length) return false;
 
 	for (let index = 0; index < splatA.length; ++index) {

@@ -407,7 +407,7 @@ ReactDom.createRoot(document.body).render(<Application >)
 
 ## Data fetching
 
-If your route needs some data to be fetched asynchronously before the route is shown, you can specify an async function as a data property to your route. The parameters of the matched path is the argument to your async function, allowing you to fetch the correct data based on the parameters of your route.
+If your route needs some data to be fetched asynchronously before the route is shown, you can specify an async function as a data property to your route. The parameters and splat of the matched path are the arguments to your async function, allowing you to fetch the correct data based on the parameters and/or splat of your route.
 
 ```javascript
 import Routes from 'react-sprout';

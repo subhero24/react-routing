@@ -1,5 +1,5 @@
+import Url from 'url';
 import React from 'react';
-import Url from './libs/url.js';
 import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
@@ -22,12 +22,12 @@ const REPLACE = 'REPLACE';
 // Mock useTransition to support React versions without useTransition
 let useIsomorphicTransition = unstable_useTransition ?? useTransition;
 if (useIsomorphicTransition == undefined) {
-	console.warn(
-		'React useTransition is not defined. Falling back to transitions without Suspense. Please use a version of React that supports transitions to do sticky navigations.',
-	);
 	useIsomorphicTransition = function () {
 		let pending = false;
 		let transition = function (execute) {
+			console.warn(
+				'React useTransition is not defined. Falling back to transitions without Suspense. Please use a version of React that supports transitions to do sticky navigations.',
+			);
 			execute();
 		};
 

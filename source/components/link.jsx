@@ -1,5 +1,5 @@
+import Url from 'url';
 import React from 'react';
-import Url from '../libs/url.js';
 import useLocation from '../hooks/use-location';
 import useNavigate from '../hooks/use-navigate';
 
