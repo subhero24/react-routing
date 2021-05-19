@@ -8,11 +8,15 @@ export default function matcherByDescriptor(descriptor) {
 		let paramNames = [];
 		let paramValues = [];
 
+		let basePath = Path.join(base, path);
+		let baseDescriptor = Path.join(base, descriptor);
 		// Using URL to find the pathname part does not work when
 		// path is the empty string. Then the result becomes "/" instead of ""
-		let pathName = path.split('?')[0];
-		let pathParts = Path.join(base, pathName).split('/');
-		let descriptorParts = Path.join(base, descriptor).split('/');
+		let match = basePath.match(/([^?#]*)(\?[^#]*)?(#.*)?/);
+		let search = match[2];
+		let pathName = match[1];
+		let pathParts = pathName.split('/');
+		let descriptorParts = baseDescriptor.split('/');
 
 		while (descriptorParts.length) {
 			let descriptorPart = descriptorParts.shift();
@@ -60,6 +64,9 @@ export default function matcherByDescriptor(descriptor) {
 			}
 		}
 
-		return { splat, params, length };
+		let matched = pathName.slice(0, length);
+		let unmatched = pathName.slice(length);
+
+		return [matched, unmatched, params, splat, search];
 	};
 }
