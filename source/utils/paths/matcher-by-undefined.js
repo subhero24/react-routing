@@ -1,8 +1,11 @@
 export default function MatcherByUndefined() {
-	return function (path) {
-		let splat = path.replace(/^\/+/, '').split('/');
+	return function (path, base) {
+		let match = path.match(/([^?#]*)(\?[^#]*)?(#.*)?/);
+		let pathName = match[1];
+
+		let splat = pathName.replace(/^\/+/, '').split('/');
 		let params = {};
-		let length = 0;
-		return { splat, params, length };
+
+		return { base, params, splat };
 	};
 }

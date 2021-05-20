@@ -12,7 +12,7 @@ import interpolate from '../paths/interpolate-path.js';
 import createResource from '../create-resource.js';
 
 function Route(props) {
-	let { params, splat, search, resource, render: RenderComponent, props: renderProps, children } = props;
+	let { params, splat, resource, render: RenderComponent, props: renderProps, children } = props;
 
 	// The ChildContext is used for the <Child /> component, to know what children to render.
 	// So we set children on context, even though they are passed as the children of Component.
@@ -80,10 +80,10 @@ function createRouteElement(routes, path, context = {}) {
 		let match = route.path(path, context.base, strict);
 
 		if (match) {
-			let [matched, unmatched, matchParams, splat, search] = match;
-
 			let props = {};
-			let params = { ...context.params, ...matchParams };
+			let splat = match.splat;
+			let params = { ...context.params, ...match.params };
+			let search = path.match(/([^?#]*)(\?[^#]*)?(#.*)?/)[2];
 			let render = route.render;
 			if (render === Redirect) {
 				let targetPath = interpolate(route.redirect, params, splat);
@@ -105,12 +105,12 @@ function createRouteElement(routes, path, context = {}) {
 						// We check if the data function uses one or two arguments
 						// to find out if params or splat changes are relevant to the data being fetched
 						// Otherwise splat or params can change while not used to fetch the data, so it can reuse the old resource
-						let ignoreSplat = data.length < 2;
 						let ignoreParams = data.length < 1;
-						let ignoreSearch = data.length < 3;
 						if (ignoreParams || equalParams(context.element.props.params, params)) {
+							let ignoreSplat = data.length < 2;
 							if (ignoreSplat || equalSplat(context.element.props.splat, splat)) {
-								if (ignoreSearch || equalSearch(context.element.props.search, search)) {
+								let ignoreSearch = data.length < 3;
+								if (ignoreSearch || equalPath(context.element.props.search, search)) {
 									resource = context.element.props.resource;
 								}
 							}
@@ -122,29 +122,28 @@ function createRouteElement(routes, path, context = {}) {
 			// If the previous resource was not used, create a new one
 			if (resource == undefined) {
 				if (typeof data === 'function') {
-					resource = createResource(data(params, splat, search));
+					resource = createResource(Promise.resolve(data(params, splat, search)));
 				} else if (data !== undefined) {
 					resource = createResource(Promise.resolve(data));
 				}
 			}
 
-			let childPath = unmatched;
-			let childRoutes = route.routes;
-			let childContext = {
-				base: matched,
-				params: params,
-				element: context.element?.props.children,
-			};
-
-			let childRoute = childRoutes ? createRouteElement(childRoutes, childPath, childContext) : undefined;
+			let childRoute;
+			if (route.routes) {
+				childRoute = createRouteElement(route.routes, path, {
+					base: match.base,
+					params,
+					element: context.element?.props.children,
+				});
+			}
 
 			// We need the data and search prop even though we don't use it in render, but we need it to compare
 			// in the next createRouteElement with the new data function and search value to prevent fetching the data again
 			let element = (
 				<Route
 					path={path}
-					params={params}
 					splat={splat}
+					params={params}
 					search={search}
 					data={data}
 					resource={resource}
@@ -184,6 +183,6 @@ function equalSplat(splatA, splatB) {
 	return true;
 }
 
-function equalSearch(searchA, searchB) {
+function equalPath(searchA, searchB) {
 	return searchA === searchB;
 }

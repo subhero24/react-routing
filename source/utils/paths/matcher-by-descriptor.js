@@ -1,21 +1,24 @@
 import Path from 'path';
 
+import isSplatSegment from './is-splat-segment';
+import isParamSegment from './is-param-segment';
+
 export default function matcherByDescriptor(descriptor) {
 	return function (path, base, strict) {
 		let splat;
 		let params;
-		let length = 0;
+
 		let paramNames = [];
 		let paramValues = [];
 
-		let basePath = Path.join(base, path);
-		let baseDescriptor = Path.join(base, descriptor);
 		// Using URL to find the pathname part does not work when
 		// path is the empty string. Then the result becomes "/" instead of ""
-		let match = basePath.match(/([^?#]*)(\?[^#]*)?(#.*)?/);
-		let search = match[2];
+		let match = path.match(/([^?#]*)(\?[^#]*)?(#.*)?/);
 		let pathName = match[1];
 		let pathParts = pathName.split('/');
+
+		let baseParts = [''];
+		let baseDescriptor = Path.join(base, descriptor);
 		let descriptorParts = baseDescriptor.split('/');
 
 		while (descriptorParts.length) {
@@ -26,15 +29,15 @@ export default function matcherByDescriptor(descriptor) {
 					let pathPart = pathParts.shift();
 					if (pathPart !== '') return;
 				}
-			} else if (descriptorPart[0] === ':') {
+			} else if (isParamSegment(descriptorPart)) {
 				if (pathParts.length === 0) return;
 				let pathPart = pathParts.shift();
 				if (pathPart === '') return;
 				let paramName = descriptorPart.slice(1);
 				paramNames = [...paramNames, paramName];
 				paramValues = [...paramValues, pathPart];
-				length = length + pathPart.length + 1;
-			} else if (descriptorPart[0] === '*') {
+				baseParts.push(pathPart);
+			} else if (isSplatSegment(descriptorPart)) {
 				if (pathParts.filter(part => part !== '').length === 0) return;
 				splat = pathParts;
 				pathParts = [];
@@ -42,7 +45,7 @@ export default function matcherByDescriptor(descriptor) {
 			} else {
 				let pathPart = pathParts.shift();
 				if (pathPart !== descriptorPart) return;
-				length = length + pathPart.length + 1;
+				baseParts.push(pathPart);
 			}
 		}
 
@@ -64,9 +67,6 @@ export default function matcherByDescriptor(descriptor) {
 			}
 		}
 
-		let matched = pathName.slice(0, length);
-		let unmatched = pathName.slice(length);
-
-		return [matched, unmatched, params, splat, search];
+		return { base: baseParts.join('/'), params, splat };
 	};
 }
