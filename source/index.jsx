@@ -4,8 +4,7 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useTransition, useLayoutEffect } from 'react';
-import { unstable_useTransition } from 'react';
+import { useMemo, useState, useLayoutEffect } from 'react';
 
 import useMounted from './hooks/use-mounted.js';
 import useLatestRef from './hooks/use-latest-ref.js';
@@ -20,7 +19,7 @@ const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
 // Mock useTransition to support React versions without useTransition
-let useIsomorphicTransition = unstable_useTransition ?? useTransition;
+let useIsomorphicTransition = React.unstable_useTransition ?? React.useTransition;
 if (useIsomorphicTransition == undefined) {
 	useIsomorphicTransition = function () {
 		let pending = false;
