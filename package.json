@@ -5,13 +5,15 @@
 	"license": "MIT",
 	"description": "A suspense ready react router",
 	"main": "build/index.mjs",
+	"type": "module",
+	"types": "build/index.d.ts",
 	"files": [
 		"build"
 	],
 	"scripts": {
-		"lint": "eslint source",
-		"test": "",
-		"build": "rollup -c rollup.config.js",
+		"lint": "eslint source/**/*.*",
+		"test": "node scripts/test.mjs",
+		"build": "rollup -c rollup.config.js && cp source/index.d.ts build/index.d.ts",
 		"develop": "rollup -c rollup.config.js -w"
 	},
 	"keywords": [
@@ -21,24 +23,30 @@
 		"suspense"
 	],
 	"devDependencies": {
-		"@babel/core": "^7.12.16",
+		"@babel/cli": "^7.14.3",
+		"@babel/core": "^7.14.3",
 		"@babel/plugin-transform-react-jsx": "^7.12.16",
-		"@babel/preset-env": "^7.13.5",
+		"@babel/preset-env": "^7.14.4",
+		"@babel/register": "^7.13.16",
 		"@rollup/plugin-babel": "^5.3.0",
-		"@rollup/plugin-commonjs": "^17.1.0",
-		"@rollup/plugin-node-resolve": "^11.2.0",
+		"@rollup/plugin-commonjs": "^19.0.0",
+		"@rollup/plugin-node-resolve": "^13.0.0",
 		"babel-eslint": "^10.1.0",
-		"eslint": "^7.20.0",
-		"eslint-plugin-react": "^7.22.0",
+		"eslint": "^7.27.0",
+		"eslint-plugin-react": "^7.24.0",
 		"eslint-plugin-react-hooks": "^4.2.0",
-		"react": "0.0.0-experimental-94c0244ba",
-		"react-dom": "0.0.0-experimental-94c0244ba",
+		"esm": "^3.2.25",
+		"fs-extra": "^10.0.0",
+		"react": "0.0.0-experimental-d75105fa9",
+		"react-dom": "^0.0.0-experimental-d75105fa9",
+		"react-test-renderer": "^17.0.2",
 		"rollup": "^2.39.0",
 		"rollup-plugin-node-polyfills": "^0.2.1",
 		"rollup-plugin-terser": "^7.0.2",
-		"vite": "^2.3.3"
+		"uvu": "^0.5.1",
+		"vite": "^2.3.5"
 	},
 	"peerDependencies": {
-		"react": "0.0.0-experimental-94c0244ba"
+		"react": "^0.0.0-experimental-d75105fa9"
 	}
 }

@@ -6,7 +6,7 @@ import { Suspense } from 'react';
 
 function Root() {
 	return (
-		<Suspense fallback={null}>
+		<Suspense fallback={'suspense'}>
 			<Application />
 		</Suspense>
 	);

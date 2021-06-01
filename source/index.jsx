@@ -7,13 +7,13 @@ import LocationContext from './contexts/location';
 import { useMemo, useState, useLayoutEffect } from 'react';
 
 import useMounted from './hooks/use-mounted.js';
-import useLatestRef from './hooks/use-latest-ref.js';
+import useForceUpdate from './hooks/use-force-update.js';
 import useEventListener from './hooks/use-event-listener.js';
 import useImmutableCallback from './hooks/use-immutable-callback.js';
 
-import calculatePath from './utils/paths/calculate-path.js';
-import preprocessRoutes from './utils/routes/preprocess.js';
-import createRouteElement from './utils/routes/create-route-element.jsx';
+import createRender from './utils/create-render.jsx';
+import createRoutes from './utils/create-routes.js';
+import locationToPath from './utils/paths/location-to-path.js';
 
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
@@ -34,7 +34,7 @@ if (useIsomorphicTransition == undefined) {
 	};
 }
 
-export default function Routes(routes, options = {}) {
+export default function Routes(config, options = {}) {
 	let { location, history, document, base = '/' } = options;
 
 	let rootWindow;
@@ -84,9 +84,12 @@ export default function Routes(routes, options = {}) {
 		rootDocument = rootWindow.document;
 	}
 
-	routes = preprocessRoutes(routes);
-	let path = calculatePath(rootLocation);
-	let routeElement = createRouteElement(routes, path, { base });
+	let path = locationToPath(rootLocation);
+	let routes = createRoutes(config);
+
+	function initialRender() {
+		return createRender(routes, path, { base });
+	}
 
 	return function Router(props) {
 		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
@@ -97,93 +100,91 @@ export default function Routes(routes, options = {}) {
 		let { timeoutMs = 4000 } = props;
 
 		let mounted = useMounted();
-		let [element, setElement] = useState(routeElement);
+		let update = useForceUpdate();
+		let [render, setRender] = useState(initialRender);
+		let [action, setAction] = useState({
+			type: REPLACE,
+			path: render.path,
+			state: rootHistory?.state,
+			title: rootDocument?.title,
+		});
+
 		let [transition, pending] = useIsomorphicTransition({ timeoutMs });
 
-		let [action, setAction] = useState();
-		let [locationPath, setLocationPath] = useState(routeElement?.props.path);
-		let [historyState, setHistoryState] = useState(rootHistory?.state);
-		let [historyLength, setHistoryLength] = useState(rootHistory?.length);
-		let [documentTitle, setDocumentTitle] = useState(rootDocument?.title);
-
-		let locationReload = useImmutableCallback(function () {
-			setElement(createRouteElement(routes, locationPath, { base }));
+		// Everything related to location object
+		let url = useMemo(() => new URL(action.path, rootLocation.origin), [action.path]);
+		let locationUrl = useImmutableCallback(() => url);
+		let locationReload = useImmutableCallback(() => {
+			setRender(createRender(routes, action.path, { base }));
 		});
 
 		let location = useMemo(() => {
-			let url = new URL(locationPath, rootLocation.origin);
-
 			return {
 				reload: locationReload,
 				get href() {
-					return url.href;
+					return locationUrl().href;
 				},
 				get hash() {
-					return url.hash;
+					return locationUrl().hash;
 				},
 				get host() {
-					return url.host;
+					return locationUrl().host;
 				},
 				get port() {
-					return url.port;
+					return locationUrl().port;
 				},
 				// read-only
 				get origin() {
-					return url.origin;
+					return locationUrl().origin;
 				},
 				get search() {
-					return url.search;
+					return locationUrl().search;
 				},
 				get protocol() {
-					return url.protocol;
+					return locationUrl().protocol;
 				},
 				get password() {
-					return url.password;
+					return locationUrl().password;
 				},
 				get username() {
-					return url.username;
+					return locationUrl().username;
 				},
 				get pathname() {
-					return url.pathname;
+					return locationUrl().pathname;
 				},
 				get hostname() {
-					return url.hostname;
+					return locationUrl().hostname;
 				},
-				// read-only
 				get searchParams() {
-					return url.searchParams;
+					return locationUrl().searchParams;
 				},
 			};
-		}, [locationPath]);
+		}, [locationUrl, locationReload]);
 
-		let historyStateRef = useLatestRef(historyState);
-		let historyLengthRef = useLatestRef(historyLength);
-		let historyNavigate = useImmutableCallback(function (path, options = {}) {
+		// Everything related to the history object
+		let historyState = useImmutableCallback(() => action.state);
+		let historyNavigate = useImmutableCallback((path, options = {}) => {
 			function executeNavigation() {
-				let navigationPath;
-
-				if (options.state != undefined) setHistoryState(options.state);
-				if (options.title != undefined) setDocumentTitle(options.title);
+				let navigate = {
+					type: options.replace ? REPLACE : PUSH,
+					path: action.path,
+					state: options.state ?? action.state,
+					title: options.title ?? action.title,
+				};
 
 				if (path != undefined) {
-					let target = Url.resolve(locationPath, `${path}`);
-					if (target !== locationPath) {
-						let context = { base, element };
-						let routeElement = createRouteElement(routes, target, context);
+					let target = Url.resolve(action.path, `${path}`);
+					if (target !== action.path) {
+						let rerender = createRender(routes, target, { base, elements: render.elements });
+						let rerenderPath = rerender.path ?? target;
 
-						navigationPath = routeElement?.props.path ?? target;
+						setRender(rerender);
 
-						setElement(routeElement);
-						setLocationPath(navigationPath);
+						navigate.path = rerenderPath;
 					}
 				}
 
-				setAction({
-					type: options.replace ? REPLACE : PUSH,
-					path: navigationPath,
-					state: options.state ?? historyState,
-					title: options.title ?? documentTitle,
-				});
+				setAction(navigate);
 			}
 
 			if (options.sticky) {
@@ -212,10 +213,10 @@ export default function Routes(routes, options = {}) {
 				},
 				navigate: historyNavigate,
 				get state() {
-					return historyStateRef.current;
+					return historyState();
 				},
 				get length() {
-					return historyLengthRef.current;
+					return rootHistory.length;
 				},
 				get scrollRestoration() {
 					return rootHistory.scrollRestoration;
@@ -224,46 +225,61 @@ export default function Routes(routes, options = {}) {
 					rootHistory.scrollRestoration = scroll;
 				},
 			};
-		}, [historyStateRef, historyLengthRef]);
+		}, [historyNavigate, historyState]);
 
+		// Subscribe to popstate events and update state accordingly
 		useEventListener(rootWindow, 'popstate', function () {
-			setHistoryState(rootHistory?.state);
-			setHistoryLength(rootHistory?.length);
-			setDocumentTitle(rootDocument?.title);
+			let path = locationToPath(rootLocation);
+			let navigate = {
+				path: path,
+				state: rootHistory?.state,
+				title: rootDocument?.title,
+			};
+			if (path !== render.path) {
+				let rerender = createRender(routes, path, { base: '/', elements: render.elements });
+				if (rerender.path !== path) {
+					navigate.type = REPLACE;
+					navigate.path = rerender.path;
+				}
 
-			let path = calculatePath(rootLocation);
-			if (path !== locationPath) {
-				let routeElement = createRouteElement(routes, path, { base: '/', element });
-				setElement(routeElement);
-				setLocationPath(routeElement?.props.path ?? path);
+				setRender(rerender);
 			}
+
+			setAction(navigate);
 		});
 
-		// If component did render with updated location/history, update the browsers history
+		// Update the real history after a component was rendered after a navigation
+		// We do this in a layouteffect because we need to rerender immediately because
+		// history.length could have changed
 		useLayoutEffect(() => {
-			if (action?.type === PUSH) {
-				rootHistory?.pushState?.(action.state, action.title, action.path);
-			} else if (action?.type === REPLACE) {
+			if (action == undefined) return;
+
+			if (action.type === REPLACE) {
 				rootHistory?.replaceState?.(action.state, action.title, action.path);
+			} else if (action.type === PUSH) {
+				rootHistory?.pushState?.(action.state, action.title, action.path);
+
+				// Rerender immediately in case history.length has changed
+				update();
 			}
-			setHistoryLength(rootHistory?.length);
 		}, [action]);
+
+		// We create a new location/history when url/history.length changes, to update all
+		// components that depend on it, even if the location/history itself does not change
+		let locationContextValue = useMemo(() => ({ location }), [url]);
+		let historyContextValue = useMemo(() => ({ history }), [rootHistory?.length, action?.state]);
 
 		// Do not render children before subscription to popstate event
 		// as a child could navigate in its useEffect on mount, and this will
 		// be executed before the popstate subscription effect
 
-		// Maybe navigating in useEffect is bad practice and this is not needed?
-
-		// This should only happen if the location was not given for server side rendering
+		// This could not occur when the location is fixed, for example in SSR
 		if (!mounted && options.location == undefined) return null;
 
-		// We return a new object with the history, as history itself does not change,
-		// but components which use the history should nevertheless be updated
 		return (
-			<LocationContext.Provider value={location}>
-				<HistoryContext.Provider value={{ history }}>
-					<PendingContext.Provider value={pending}>{element}</PendingContext.Provider>
+			<LocationContext.Provider value={locationContextValue}>
+				<HistoryContext.Provider value={historyContextValue}>
+					<PendingContext.Provider value={pending}>{render.elements}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);

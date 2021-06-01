@@ -10,5 +10,4 @@ export { default as useLocation } from './hooks/use-location.js';
 export { default as useResource } from './hooks/use-resource.js';
 
 export { default as Link } from './components/link.jsx';
-export { default as Child } from './components/child.jsx';
 export { default as Redirect } from './components/redirect.jsx';

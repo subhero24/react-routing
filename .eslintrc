@@ -4,11 +4,12 @@
 		"node": true,
 		"browser": true
 	},
+	"ignorePatterns": ["*.d.ts"],
 	"extends": ["eslint:recommended", "plugin:react/recommended"],
 	"parser": "babel-eslint",
 	"parserOptions": {
 		"sourceType": "module",
-		"ecmaVersion": 2018,
+		"ecmaVersion": 12,
 		"ecmaFeatures": {
 			"jsx": true
 		}
@@ -20,6 +21,6 @@
 		"no-unused-vars": ["warn", { "ignoreRestSiblings": true }],
 		"no-constant-condition": "off",
 		"no-inner-declarations": "off",
-		"react/prop-types": "warn"
+		"react/prop-types": "off"
 	}
 }

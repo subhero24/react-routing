@@ -7,7 +7,7 @@ export default function useImmutableCallback(callback) {
 
 	return useCallback(
 		function (...args) {
-			callbackRef.current(...args);
+			return callbackRef.current(...args);
 		},
 		[callbackRef],
 	);

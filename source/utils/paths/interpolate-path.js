@@ -1,13 +1,13 @@
-import isParamSegment from '../paths/is-param-segment';
-import isStaticSegment from '../paths/is-static-segment';
-import isSplatSegment from '../paths/is-splat-segment';
+import isParamSegment from './is-param-segment.js';
+import isStaticSegment from './is-static-segment.js';
+import isSplatSegment from './is-splat-segment.js';
 
 // Interpolates the path descriptor with its params and splat
 // Example: /users/:id/* -> /users/1/profile/address
-export default function interpolate(path, params, splat) {
+export default function interpolate(descriptor, params = {}, splat = [], search = '') {
 	let index = 0;
 	let result = [];
-	let segments = path.split('/');
+	let segments = descriptor.split('/');
 	for (let segment of segments) {
 		if (isStaticSegment(segment)) {
 			result.push(segment);
@@ -23,5 +23,10 @@ export default function interpolate(path, params, splat) {
 		}
 	}
 
-	return result.join('/');
+	let path = result.join('/');
+	if (descriptor.endsWith('?')) {
+		path = path + search;
+	}
+
+	return path;
 }

@@ -1,21 +1,12 @@
-import isSplatSegment from './is-splat-segment';
-import isParamSegment from './is-param-segment';
-import isStaticSegment from './is-static-segment';
+import isParamSegment from './is-param-segment.js';
+import isStaticSegment from './is-static-segment.js';
 
 export default function score(path = '*') {
-	if (typeof path !== 'string') return 0;
+	let segments = path.replace(/^\/+|\/+$/, '').split('/');
 
-	path = path.replace(/^\//, '');
-	path = path.replace(/\/$/, '');
+	let params = segments.filter(isParamSegment).length;
+	let statics = segments.filter(isStaticSegment).length;
+	let trailing = path.endsWith('/') ? 1 : 0;
 
-	let segments = path.split('/');
-	let score = segments.length * 4;
-
-	if (path === '.') score += 1;
-	for (let segment of segments) {
-		if (isSplatSegment(segment)) score += -1;
-		if (isParamSegment(segment)) score += 2;
-		if (isStaticSegment(segment)) score += 3;
-	}
-	return score;
+	return [segments.length, statics, params, trailing];
 }
