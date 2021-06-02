@@ -2,7 +2,7 @@ import React from 'react';
 import Render from 'react-test-renderer';
 import Routes from '../build/index.mjs';
 
-import { useParams } from '../build/index.mjs';
+import { useParams, useSplat } from '../build/index.mjs';
 
 import { test } from 'uvu';
 
@@ -319,6 +319,34 @@ test('Should render children with same path out of order', function () {
 	let [child1, child2, child3] = element;
 	if (child1 !== 'child' || child2 !== 'third' || child3 != undefined) {
 		throw new Error('Children are not rendered correctly');
+	}
+});
+
+test('Should render descriptor with splat', function () {
+	function Component() {
+		let splat = useSplat();
+
+		return splat;
+	}
+
+	let Router = Routes(
+		<>
+			<Component path="a/*" />
+		</>,
+		{ location: '/a/b/c' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element == null) {
+		throw new Error('Splat descriptor should have matched');
+	}
+
+	if (element.length !== 2) {
+		throw new Error('Splat should have 2 segments');
+	}
+
+	if (element[0] !== 'b' || element[1] !== 'c') {
+		throw new Error('Splat value is not correct');
 	}
 });
 

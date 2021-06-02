@@ -1,4 +1,4 @@
-module.exports = {
+export default {
 	semi: true,
 	useTabs: true,
 	tabWidth: 4,
@@ -6,5 +6,5 @@ module.exports = {
 	printWidth: 120,
 	singleQuote: true,
 	arrowParens: 'avoid',
-	trailingComma: 'all',
+	trailingComma: 'all'
 };

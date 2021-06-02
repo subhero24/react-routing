@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import Routes, { useData, useNavigate, Link, Redirect, usePending } from '../build/index.mjs';
+import Routes, { useData, useSplat, useNavigate, Link, Redirect, usePending } from '../build/index.mjs';
 
 async function sleep(ms) {
 	return new Promise(function (resolve) {
@@ -24,11 +24,10 @@ async function fetchData2(params, splat, search) {
 
 let Router = Routes(
 	<>
-		<A path="a">
-			<B data={fetchData1} />
-			<C data={fetchData2} />
-		</A>
-		<X path="x" />
+		<Parent path="a">
+			<Child path="/a/b" />
+		</Parent>
+		,
 	</>,
 );
 
@@ -36,22 +35,25 @@ export default function Application() {
 	return <Router />;
 }
 
-function A(props) {
-	let children = props.children.map(function (child) {
-		// return child;
-		return (
-			<Suspense key={child.key} fallback="loading">
-				{child}
-			</Suspense>
-		);
-	});
-
+function Parent(props) {
 	return (
 		<>
-			<div>{children}</div>
-			<Link to="x">X</Link>
+			<h1>parent</h1>
+			{props.children}
 		</>
 	);
+}
+
+function Child() {
+	return 'child';
+}
+
+function A(props) {
+	let splat = useSplat();
+
+	console.log(splat);
+
+	return <span>A</span>;
 }
 
 function B(props) {

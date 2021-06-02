@@ -12,4 +12,6 @@ function Root() {
 	);
 }
 
-ReactDom.unstable_createRoot(document.getElementById('root')).render(<Root />);
+
+
+ReactDom.createRoot(document.getElementById('root')).render(<Root />);

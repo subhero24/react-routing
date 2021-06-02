@@ -21,10 +21,10 @@ export default [
 				presets: ['@babel/preset-env'],
 				plugins: ['@babel/plugin-transform-react-jsx'],
 			}),
-			// pluginTerser.terser({
-			// 	mangle: true,
-			// 	safari10: true,
-			// }),
+			pluginTerser.terser({
+				mangle: true,
+				safari10: true,
+			}),
 		],
 		external: [/@babel\/runtime/, 'react'],
 	},

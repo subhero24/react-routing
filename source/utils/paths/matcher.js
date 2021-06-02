@@ -29,38 +29,54 @@ export default function matcher(descriptor, pathName, root = '/') {
 	let pathParts = pathName.split('/');
 	let descriptorParts = descriptor.split('/');
 
+	let path;
+	let splat;
+	let strict;
 	while (descriptorParts.length) {
 		let descriptorPart = descriptorParts.shift();
-		if (isParamSegment(descriptorPart)) {
-			let pathPart = pathParts.shift();
-			if (pathPart == undefined) return;
-			if (pathPart === '' && pathParts.length === 0) return;
+		if (isSplatSegment(descriptorPart)) {
+			if (pathParts.length === 0) return;
+			if (pathParts.length === 1 && pathParts[0] === '') return;
 
-			let paramName = descriptorPart.slice(1);
-			if (paramName.length) {
-				params[paramName] = pathPart;
+			let pathEndsWithSlash = pathName.endsWith('/');
+			let descEndsWithSlash = descriptor.endsWith('/');
+			if (descEndsWithSlash && pathEndsWithSlash === false) return;
+
+			// Trim the last empty part of the splat if the path ended with a "/"
+			splat = pathParts.slice(0, pathEndsWithSlash ? -1 : undefined);
+			strict = pathEndsWithSlash === descEndsWithSlash;
+
+			break;
+		} else {
+			let pathPart = pathParts.shift();
+			if (isStaticSegment(descriptorPart)) {
+				if (pathPart !== descriptorPart) return;
+
+				base = Path.join(base, pathPart);
+			} else if (isParamSegment(descriptorPart)) {
+				if (pathPart == undefined) return;
+				if (pathPart === '' && pathParts.length === 0) return;
+
+				let paramName = descriptorPart.slice(1);
+				if (paramName.length) {
+					params[paramName] = pathPart;
+				}
+
+				base = Path.join(base, pathPart);
+			} else if (isDotSegment(descriptorPart)) {
+				if (pathPart !== '') return;
 			}
-
-			base = Path.join(base, pathPart);
-		} else if (isSplatSegment(descriptorPart)) {
-			let pathPart = pathParts.shift();
-			if (pathPart === '' && pathParts.length === 0) return;
-
-			descriptorParts = [];
-		} else if (isStaticSegment(descriptorPart)) {
-			let pathPart = pathParts.shift();
-			if (pathPart !== descriptorPart) return;
-
-			base = Path.join(base, pathPart);
-		} else if (isDotSegment(descriptorPart)) {
-			let pathPart = pathParts.shift();
-			if (pathPart !== '') return;
 		}
 	}
 
-	let path = pathParts.join('/');
-	let splat = pathParts;
-	let strict = pathParts.length === 0;
+	path = pathParts.join('/');
+
+	if (splat == undefined) {
+		splat = pathParts;
+	}
+	if (strict == undefined) {
+		strict = pathParts.length === 0;
+	}
 
 	return { base, path, params, splat, strict };
 }
