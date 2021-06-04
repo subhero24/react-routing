@@ -1,3 +1,3 @@
-export default function isParamSegment(segment) {
+export default function isDotSegment(segment) {
 	return segment === '.';
 }

@@ -2,7 +2,7 @@ import React from 'react';
 import Render from 'react-test-renderer';
 import Routes from '../build/index.mjs';
 
-import { useParams, useSplat } from '../build/index.mjs';
+import { useParams, useSplat, Redirect } from '../build/index.mjs';
 
 import { test } from 'uvu';
 
@@ -349,5 +349,37 @@ test('Should render descriptor with splat', function () {
 		throw new Error('Splat value is not correct');
 	}
 });
+
+test('Should render redirect', function () {
+	let Router = Routes(
+		<>
+			<Component path="a" />
+			<Redirect path="/" to="a" />
+		</>,
+		{ location: '/' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element !== 'component') {
+		throw new Error('Should have redirected the url')
+	}
+});
+
+test('Should render redirect with trailing slash', function () {
+	let Router = Routes(
+		<>
+			<Child path="a" />
+			<Other path="a/" />
+			<Redirect path="/" to="a/" />
+		</>,
+		{ location: '/' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element !== 'other') {
+		throw new Error('Should have redirected the url with trailing slash')
+	}
+});
+
 
 test.run();

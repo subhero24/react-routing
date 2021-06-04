@@ -65,6 +65,13 @@ export default function createRootRender(routes, rootPath, { base = '/', element
 				// We update the path to the new location
 				path = Path.join('/', Path.relative(base, error.to));
 
+				// Path.relative strips trailing slashes, which we do not want.
+				// A redirect with trailing slash could be intentional
+				if (error.to.endsWith('/')) {
+					path = path + '/'
+				}
+				
+
 				// Before continuing to render with the new path, we check for infinite redirect loops
 				if (redirects.includes(path)) {
 					redirects = [...redirects, path];
