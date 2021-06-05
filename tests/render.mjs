@@ -423,4 +423,19 @@ test('Should render child without trailing slash', function () {
 	}
 });
 
+test('Should render second child with the splat', function () {
+	let Router = Routes(
+		<Parent path="a/">
+			<Child path="./" />
+			<Other path="*" />
+		</Parent>,
+		{ location: '/a/b' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element?.children != 'other') {
+		throw new Error('Should have rendered the child with the splat');
+	}
+});
+
 test.run();

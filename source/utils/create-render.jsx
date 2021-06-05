@@ -94,12 +94,18 @@ function createRender(routes, path, context = {}) {
 
 	// We use null because an empty path could set previous to undefined, which is a valid value
 	let match = null;
+	let matched = false;
 	let previous = null;
 	let elements = [];
 
 	for (let route of routes) {
 		// Break if we encounter different path after having a match
-		if (previous !== route.path && match) break;
+		if (previous !== route.path) {
+			if (matched) break;
+			if (match) {
+				match = null;
+			}
+		}
 
 		if (match == undefined) {
 			match = matcher(route.path, path, context.base);
@@ -107,6 +113,8 @@ function createRender(routes, path, context = {}) {
 
 		if (match) {
 			if (route.strict === false || match.strict === true) {
+				matched = true;
+
 				let splat = match.splat;
 				let search = context.search;
 				let params = { ...context.params, ...match.params };
