@@ -11,6 +11,7 @@ import Redirect from '../components/redirect.jsx';
 import useResource from '../hooks/use-resource.js';
 
 import matcher from './paths/matcher.js';
+import resolve from './paths/resolve.js';
 import interpolate from './paths/interpolate-path.js';
 import createResource from './create-resource.js';
 
@@ -124,7 +125,7 @@ function createRender(routes, path, context = {}) {
 
 				if (route.type === Redirect) {
 					let targetPath = interpolate(route.to, match.params, match.splat, search);
-					let targetBase = Url.resolve(context.base, targetPath);
+					let targetBase = resolve(context.base, targetPath);
 					throw new RedirectError(targetBase);
 				}
 

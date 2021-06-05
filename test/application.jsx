@@ -23,12 +23,10 @@ async function fetchData2(params, splat, search) {
 }
 
 let Router = Routes(
-	<>
-		<Parent path="a/">
-			<Child path="./" />
-			<Other path="*" />
-		</Parent>
-	</>,
+	<Parent path="a/*">
+		<Child path=":param/b/" />
+		<Redirect path=":param" to=":param/b/" />
+	</Parent>,
 );
 
 export default function Application() {

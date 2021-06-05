@@ -464,4 +464,19 @@ test('Should render child with data of the parent', function () {
 	}
 });
 
+test('Should redirect to the correct path', function () {
+	let Router = Routes(
+		<Parent path="a/*">
+			<Child path=":param/b/" />
+			<Redirect path=":param" to=":param/b/" />
+		</Parent>,
+		{ location: '/a/param' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element?.children?.[0] !== 'child') {
+		throw new Error('Did not redirect correctly');
+	}
+});
+
 test.run();
