@@ -395,4 +395,32 @@ test('Should render child with trailing slash', function () {
 	}
 });
 
+test('Should not render child without trailing slash', function () {
+	let Router = Routes(
+		<Parent path="a/">
+			<Child path="b" />
+		</Parent>,
+		{ location: '/a/b/' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element?.children != null) {
+		throw new Error('Should not have rendered the child because the location ended with a slash');
+	}
+});
+
+test('Should render child without trailing slash', function () {
+	let Router = Routes(
+		<Parent path="a/">
+			<Child path="b" />
+		</Parent>,
+		{ location: '/a/b' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element?.children == null) {
+		throw new Error('Should have rendered the child');
+	}
+});
+
 test.run();

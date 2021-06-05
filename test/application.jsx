@@ -24,9 +24,8 @@ async function fetchData2(params, splat, search) {
 
 let Router = Routes(
 	<>
-		<Parent path="a">
-			<Child />
-			<Other />
+		<Parent path="a/">
+			<Child path="b" />
 		</Parent>
 	</>,
 );

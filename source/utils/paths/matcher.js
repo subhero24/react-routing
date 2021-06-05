@@ -1,8 +1,10 @@
-import * as Path from '../path.js';
+import Path from 'path';
 
 import isParamSegment from './is-param-segment.js';
 import isSplatSegment from './is-splat-segment.js';
 import isStaticSegment from './is-static-segment.js';
+
+import resolve from './resolve.js';
 
 const slashesRegex = /^\/+|\/+$/g;
 
@@ -18,7 +20,7 @@ export default function matcher(descriptor, pathname, root = '/') {
 	}
 
 	let absolutePathname = Path.join(root, pathname);
-	let absoluteDescriptor = Path.resolve(root, descriptor);
+	let absoluteDescriptor = resolve(root, descriptor);
 	let pathnameParts = absolutePathname.replace(slashesRegex, '').split('/');
 	let descriptorParts = absoluteDescriptor.replace(slashesRegex, '').split('/');
 	let pathnameEndsWithSlash = absolutePathname.endsWith('/');
@@ -35,26 +37,31 @@ export default function matcher(descriptor, pathname, root = '/') {
 			strict = pathnameEndsWithSlash === descriptorEndsWithSlash;
 			break;
 		} else {
-			let pathPart = pathnameParts.shift();
+			let pathnamePart = pathnameParts.shift();
 			if (isStaticSegment(descriptorPart)) {
-				if (pathPart !== descriptorPart) return;
+				if (pathnamePart !== descriptorPart) return;
 
-				base = Path.join(base, pathPart, descriptorEndsWithSlash ? '/' : '');
+				base = Path.join(base, pathnamePart, descriptorEndsWithSlash ? '/' : '');
 			} else if (isParamSegment(descriptorPart)) {
-				if (pathPart == undefined) return;
+				if (pathnamePart == undefined) return;
 				let paramName = descriptorPart.slice(1);
 				if (paramName.length) {
-					params[paramName] = pathPart;
+					params[paramName] = pathnamePart;
 				}
 
-				base = Path.join(base, pathPart, descriptorEndsWithSlash ? '/' : '');
+				base = Path.join(base, pathnamePart, descriptorEndsWithSlash ? '/' : '');
 			}
 		}
 	}
 
-	if (descriptorEndsWithSlash && pathnameEndsWithSlash === false) return;
+	if (pathnameParts.length === 0) {
+		// When matching the full url, take the trailing slashes into account
+		if (descriptorEndsWithSlash && !pathnameEndsWithSlash) {
+			return;
+		}
+	}
 
-	let path = Path.relative(base, absolutePathname);
+	let path = absolutePathname.slice(base.length);
 	let splat = pathnameParts;
 	if (strict == undefined) {
 		strict = path.length === 0;
