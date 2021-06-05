@@ -68,9 +68,8 @@ export default function createRootRender(routes, rootPath, { base = '/', element
 				// Path.relative strips trailing slashes, which we do not want.
 				// A redirect with trailing slash could be intentional
 				if (error.to.endsWith('/')) {
-					path = path + '/'
+					path = path + '/';
 				}
-				
 
 				// Before continuing to render with the new path, we check for infinite redirect loops
 				if (redirects.includes(path)) {
@@ -97,6 +96,7 @@ function createRender(routes, path, context = {}) {
 	let match = null;
 	let previous = null;
 	let elements = [];
+
 	for (let route of routes) {
 		// Break if we encounter different path after having a match
 		if (previous !== route.path && match) break;

@@ -25,9 +25,9 @@ async function fetchData2(params, splat, search) {
 let Router = Routes(
 	<>
 		<Parent path="a">
-			<Child path="/a/b" />
+			<Child />
+			<Other />
 		</Parent>
-		,
 	</>,
 );
 
@@ -46,6 +46,10 @@ function Parent(props) {
 
 function Child() {
 	return 'child';
+}
+
+function Other() {
+	return 'other';
 }
 
 function A(props) {

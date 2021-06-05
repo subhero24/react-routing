@@ -160,7 +160,7 @@ test('Should render strictly if parent has only children without paths', functio
 
 	let element = Render.create(<Router />).toJSON();
 	if (element !== null) {
-		throw new Error('Parent should not have matched');
+		throw new Error('Parent should not have matched with location /a/b');
 	}
 });
 
@@ -175,7 +175,7 @@ test('Should render strictly if parent has only children without paths', functio
 
 	let element = Render.create(<Router />).toJSON();
 	if (element !== null) {
-		throw new Error('Parent should not have matched');
+		throw new Error('Parent should not have matched with location /a/');
 	}
 });
 
@@ -361,7 +361,7 @@ test('Should render redirect', function () {
 
 	let element = Render.create(<Router />).toJSON();
 	if (element !== 'component') {
-		throw new Error('Should have redirected the url')
+		throw new Error('Should have redirected the url');
 	}
 });
 
@@ -377,9 +377,22 @@ test('Should render redirect with trailing slash', function () {
 
 	let element = Render.create(<Router />).toJSON();
 	if (element !== 'other') {
-		throw new Error('Should have redirected the url with trailing slash')
+		throw new Error('Should have redirected the url with trailing slash');
 	}
 });
 
+test('Should render child with trailing slash', function () {
+	let Router = Routes(
+		<Parent path="a">
+			<Child path="./" />
+		</Parent>,
+		{ location: '/a/' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element?.children == null) {
+		throw new Error('Should have rendered the child with the trailing slash');
+	}
+});
 
 test.run();

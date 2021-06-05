@@ -1,81 +1,63 @@
-import Path from 'path';
+import * as Path from '../path.js';
 
-import isDotSegment from './is-dot-segment.js';
 import isParamSegment from './is-param-segment.js';
 import isSplatSegment from './is-splat-segment.js';
 import isStaticSegment from './is-static-segment.js';
 
-const leadingSlashes = /^\/+/;
+const slashesRegex = /^\/+|\/+$/g;
 
-export default function matcher(descriptor, pathName, root = '/') {
-	let base = root;
-	let params = {};
+export default function matcher(descriptor, pathname, root = '/') {
 	if (descriptor == undefined) {
-		let path = pathName;
-		let splat = pathName.replace(leadingSlashes, '').split('/');
+		let base = root;
+		let path = pathname;
+		let splat = pathname.replace(slashesRegex, '').split('/');
+		let params = {};
 		let strict = true;
 
 		return { base, path, params, splat, strict };
 	}
 
-	// When matching absolute descriptors, we need to make the path absolute too for matching
-	if (descriptor.startsWith('/')) {
-		pathName = Path.join(base, pathName);
-	}
+	let absolutePathname = Path.join(root, pathname);
+	let absoluteDescriptor = Path.resolve(root, descriptor);
+	let pathnameParts = absolutePathname.replace(slashesRegex, '').split('/');
+	let descriptorParts = absoluteDescriptor.replace(slashesRegex, '').split('/');
+	let pathnameEndsWithSlash = absolutePathname.endsWith('/');
+	let descriptorEndsWithSlash = absoluteDescriptor.endsWith('/');
 
-	pathName = pathName.replace(leadingSlashes, '');
-	descriptor = descriptor.replace(leadingSlashes, '');
-
-	let pathParts = pathName.split('/');
-	let descriptorParts = descriptor.split('/');
-
-	let path;
-	let splat;
+	let base = '/';
+	let params = {};
 	let strict;
 	while (descriptorParts.length) {
 		let descriptorPart = descriptorParts.shift();
 		if (isSplatSegment(descriptorPart)) {
-			if (pathParts.length === 0) return;
-			if (pathParts.length === 1 && pathParts[0] === '') return;
+			if (pathnameParts.length === 0) return;
 
-			let pathEndsWithSlash = pathName.endsWith('/');
-			let descEndsWithSlash = descriptor.endsWith('/');
-			if (descEndsWithSlash && pathEndsWithSlash === false) return;
-
-			// Trim the last empty part of the splat if the path ended with a "/"
-			splat = pathParts.slice(0, pathEndsWithSlash ? -1 : undefined);
-			strict = pathEndsWithSlash === descEndsWithSlash;
-
+			strict = pathnameEndsWithSlash === descriptorEndsWithSlash;
 			break;
 		} else {
-			let pathPart = pathParts.shift();
+			let pathPart = pathnameParts.shift();
 			if (isStaticSegment(descriptorPart)) {
 				if (pathPart !== descriptorPart) return;
 
-				base = Path.join(base, pathPart);
+				base = Path.join(base, pathPart, descriptorEndsWithSlash ? '/' : '');
 			} else if (isParamSegment(descriptorPart)) {
 				if (pathPart == undefined) return;
-				if (pathPart === '' && pathParts.length === 0) return;
-
 				let paramName = descriptorPart.slice(1);
 				if (paramName.length) {
 					params[paramName] = pathPart;
 				}
 
-				base = Path.join(base, pathPart);
-			} else if (isDotSegment(descriptorPart)) {
-				if (pathPart !== '') return;
+				base = Path.join(base, pathPart, descriptorEndsWithSlash ? '/' : '');
 			}
 		}
 	}
 
-	path = pathParts.join('/');
+	if (descriptorEndsWithSlash && pathnameEndsWithSlash === false) return;
 
-	if (splat == undefined) {
-		splat = pathParts;
-	}
+	let path = Path.relative(base, absolutePathname);
+	let splat = pathnameParts;
 	if (strict == undefined) {
-		strict = pathParts.length === 0;
+		strict = path.length === 0;
 	}
 
 	return { base, path, params, splat, strict };
