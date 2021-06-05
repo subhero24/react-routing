@@ -2,7 +2,8 @@ import React from 'react';
 import Render from 'react-test-renderer';
 import Routes from '../build/index.mjs';
 
-import { useParams, useSplat, Redirect } from '../build/index.mjs';
+import { Suspense } from 'react';
+import { useParams, useSplat, useData, Redirect } from '../build/index.mjs';
 
 import { test } from 'uvu';
 
@@ -435,6 +436,31 @@ test('Should render second child with the splat', function () {
 	let element = Render.create(<Router />).toJSON();
 	if (element?.children != 'other') {
 		throw new Error('Should have rendered the child with the splat');
+	}
+});
+
+test('Should render child with data of the parent', function () {
+	function Child() {
+		let data = useData();
+
+		return data ?? null;
+	}
+
+	let Router = Routes(
+		<Parent path="a" data={() => 'data'}>
+			<Child path="b" />
+		</Parent>,
+
+		{ location: '/a/b' },
+	);
+
+	let element = Render.create(
+		<Suspense fallback="fallback">
+			<Router />
+		</Suspense>,
+	).toJSON();
+	if (element !== 'fallback') {
+		throw new Error('Should have rendered the child with the data of the parent');
 	}
 });
 

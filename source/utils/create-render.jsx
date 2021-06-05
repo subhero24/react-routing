@@ -8,15 +8,18 @@ import ResourceContext from '../contexts/resource.js';
 
 import Redirect from '../components/redirect.jsx';
 
-import interpolate from './paths/interpolate-path.js';
-import createResource from './create-resource.js';
+import useResource from '../hooks/use-resource.js';
 
 import matcher from './paths/matcher.js';
+import interpolate from './paths/interpolate-path.js';
+import createResource from './create-resource.js';
 
 function Route(props) {
 	let { route, match, params, resource, children } = props;
 
 	let { type: RenderComponent } = route;
+
+	let parentResource = useResource();
 
 	let childIds;
 	if (children) {
@@ -29,7 +32,7 @@ function Route(props) {
 	}
 
 	return (
-		<ResourceContext.Provider value={resource}>
+		<ResourceContext.Provider value={resource ?? parentResource}>
 			<ParamsContext.Provider value={params}>
 				<SplatContext.Provider value={match.splat}>
 					<RenderComponent child={childIds}>{children}</RenderComponent>
