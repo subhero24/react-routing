@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import Routes, { useData, useSplat, useNavigate, Link, Redirect, usePending } from '../build/index.mjs';
+import Routes, { useData, useSplat, useNavigate, Link, Redirect, useHistory, usePending } from '../build/index.mjs';
 
 async function sleep(ms) {
 	return new Promise(function (resolve) {
@@ -22,12 +22,26 @@ async function fetchData2(params, splat, search) {
 	return { params, splat, search };
 }
 
-let Router = Routes(
-	<Parent path="a/*">
-		<Child path=":param/b/" />
-		<Redirect path=":param" to=":param/b/" />
-	</Parent>,
-);
+function Navigator() {
+	let history = useHistory();
+
+	function onWootClick() {
+		history.navigate('#woot');
+	}
+
+	function onYeetClick() {
+		history.navigate('#yeet');
+	}
+
+	return (
+		<div>
+			<button onClick={onWootClick}>woot</button>
+			<button onClick={onYeetClick}>yeet</button>
+		</div>
+	);
+}
+
+let Router = Routes(<Navigator />);
 
 export default function Application() {
 	return <Router />;

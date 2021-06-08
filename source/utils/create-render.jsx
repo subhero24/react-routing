@@ -51,7 +51,7 @@ class RedirectError extends Error {
 }
 
 export default function createRootRender(routes, rootPath, { base = '/', elements = null }) {
-	let [path, search = ''] = rootPath.match(/([^?#]*)(\?[^#]*)?(#.*)?/).slice(1);
+	let [path, search = '', hash = ''] = rootPath.match(/([^?#]*)(\?[^#]*)?(#.*)?/).slice(1);
 
 	// When redirected to a new url, we should check to see if the url was already encountered before,
 	// as to prevent an infinite loop in redirects. So we keep an array of all visited paths, to prevent this.
@@ -60,7 +60,7 @@ export default function createRootRender(routes, rootPath, { base = '/', element
 
 	while (true) {
 		try {
-			let rootPath = path + search;
+			let rootPath = path + search + hash;
 			let rootElements = createRender(routes, path, { base, elements, search });
 
 			return { path: rootPath, elements: rootElements };
