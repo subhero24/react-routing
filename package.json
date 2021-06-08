@@ -1,6 +1,6 @@
 {
 	"name": "react-sprout",
-	"version": "0.0.38",
+	"version": "0.0.39",
 	"author": "Bruno Van Damme",
 	"license": "MIT",
 	"description": "A suspense ready react router",
