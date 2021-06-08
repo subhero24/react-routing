@@ -134,6 +134,7 @@ function createRender(routes, path, context = {}) {
 				// Recover the data resource of the previously rendered route. Try to reuse the same resource.
 				// Prevent the same data to be fetched when the component is already mounted, by checking the previous rendered  params, splat and search
 				// We can not use useMemo inside the Route element as it does not survive a suspend
+
 				let resource;
 				if (route.data && contextElement) {
 					let dataFunctionIgnoresParams = route.data.length < 1;
@@ -141,7 +142,7 @@ function createRender(routes, path, context = {}) {
 						let dataFunctionIgnoresSplat = route.data.length < 2;
 						if (dataFunctionIgnoresSplat || equalSplat(contextElement.props.match.splat, match.splat)) {
 							let dataFunctionIgnoresSearch = route.data.length < 3;
-							if (dataFunctionIgnoresSearch || equalSearch(contextElement.props.match.search, search)) {
+							if (dataFunctionIgnoresSearch || equalSearch(contextElement.props.search, search)) {
 								resource = contextElement.props.resource;
 							}
 						}

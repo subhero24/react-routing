@@ -22,15 +22,25 @@ async function fetchData2(params, splat, search) {
 	return { params, splat, search };
 }
 
+async function fetcher(parrams, splat, search) {
+	console.log('woto');
+}
+
+let Router = Routes(<Navigator data={fetcher} />);
+
+export default function Application() {
+	return <Router />;
+}
+
 function Navigator() {
 	let history = useHistory();
 
 	function onWootClick() {
-		history.navigate('#woot');
+		history.navigate('/divisions/4238?week=02#ranking');
 	}
 
 	function onYeetClick() {
-		history.navigate('#yeet');
+		history.navigate('#matches');
 	}
 
 	return (
@@ -39,12 +49,6 @@ function Navigator() {
 			<button onClick={onYeetClick}>yeet</button>
 		</div>
 	);
-}
-
-let Router = Routes(<Navigator />);
-
-export default function Application() {
-	return <Router />;
 }
 
 function Parent(props) {
