@@ -1,4 +1,3 @@
-import Url from 'url';
 import Path from 'path';
 import React from 'react';
 
