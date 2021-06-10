@@ -4,35 +4,32 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useLayoutEffect } from 'react';
+import { useMemo, useState, useLayoutEffect, Suspense } from 'react';
 
+import useData from './hooks/use-data.js';
 import useMounted from './hooks/use-mounted.js';
 import useForceUpdate from './hooks/use-force-update.js';
 import useEventListener from './hooks/use-event-listener.js';
 import useImmutableCallback from './hooks/use-immutable-callback.js';
 
+import sleep from './utils/sleep.js';
 import createRender from './utils/create-render.jsx';
 import createRoutes from './utils/create-routes.js';
 import locationToPath from './utils/paths/location-to-path.js';
+import createResource from './utils/create-resource';
 
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
 
-// Mock useTransition to support React versions without useTransition
-let useIsomorphicTransition = React.unstable_useTransition ?? React.useTransition;
-if (useIsomorphicTransition == undefined) {
-	useIsomorphicTransition = function () {
-		let pending = false;
-		let transition = function (execute) {
-			console.warn(
-				'React useTransition is not defined. Falling back to transitions without Suspense. Please use a version of React that supports transitions to do sticky navigations.',
-			);
-			execute();
-		};
-
-		return [transition, pending];
+// Mock startTransition to support React versions without startTransition
+let startTransition =
+	React.startTransition ??
+	function startTransition(execute) {
+		console.warn(
+			'React startTransition is not defined. Falling back to transitions without sticky navigation. Please use a version of React that supports transitions to do sticky navigations.',
+		);
+		execute();
 	};
-}
 
 export default function Routes(config, options = {}) {
 	let { location, history, document, base = '/' } = options;
@@ -92,15 +89,10 @@ export default function Routes(config, options = {}) {
 	}
 
 	return function Router(props) {
-		// TODO: Add other Suspense options like busyDelayMs, and busyMinDurationMs
-		// when issues have been resolved
-		// https://github.com/facebook/react/issues/18599
-		// https://github.com/facebook/react/issues/18595
+		let { sticky = 100, delayPending = 200, minPending = 500, fallback = null } = props;
 
-		let { timeoutMs = 4000 } = props;
-
-		let mounted = useMounted();
 		let update = useForceUpdate();
+		let mounted = useMounted();
 		let [render, setRender] = useState(initialRender);
 		let [action, setAction] = useState({
 			type: REPLACE,
@@ -108,8 +100,8 @@ export default function Routes(config, options = {}) {
 			state: rootHistory?.state,
 			title: rootDocument?.title,
 		});
-
-		let [transition, pending] = useIsomorphicTransition({ timeoutMs });
+		let [pending, setPending] = useState(false);
+		let [resource, setResource] = useState();
 
 		// Everything related to location object
 		let url = useMemo(() => new URL(action.path, rootLocation.origin), [action.path]);
@@ -163,8 +155,8 @@ export default function Routes(config, options = {}) {
 
 		// Everything related to the history object
 		let historyState = useImmutableCallback(() => action.state);
-		let historyNavigate = useImmutableCallback((path, options = {}) => {
-			function executeNavigation() {
+		let historyNavigate = useImmutableCallback(function (path, options = {}) {
+			startTransition(function () {
 				let navigate = {
 					type: options.replace ? REPLACE : PUSH,
 					path: action.path,
@@ -175,23 +167,59 @@ export default function Routes(config, options = {}) {
 				if (path != undefined) {
 					let target = Url.resolve(action.path, `${path}`);
 					if (target !== action.path) {
+						let resource;
 						let rerender = createRender(routes, target, { base, elements: render.elements });
 						let rerenderPath = rerender.path ?? target;
 
+						let stickyValue = options.sticky ?? sticky;
+						if (stickyValue === true) {
+							stickyValue = sticky;
+						}
+
+						if (stickyValue !== false && stickyValue !== 0) {
+							let done = false;
+							let pending = false;
+
+							// Only set the pending indicator when pending is true when still sticky
+							if (stickyValue > delayPending || stickyValue === true) {
+								setTimeout(function () {
+									if (done === false) {
+										pending = true;
+										setPending(true);
+									}
+								}, delayPending);
+							}
+
+							resource = createResource(
+								new Promise(resolve => {
+									async function transition() {
+										if (pending) {
+											await sleep(minPending);
+										}
+
+										resolve();
+									}
+
+									// Start transition if all data is in
+									Promise.all(rerender.promises).then(transition);
+
+									// If sticky is true, do not use a timeout to wait indefinitely till all data has arrived
+									if (stickyValue !== true) {
+										setTimeout(transition, stickyValue);
+									}
+								}),
+							);
+						}
+
 						setRender(rerender);
+						setResource(resource);
 
 						navigate.path = rerenderPath;
 					}
 				}
 
 				setAction(navigate);
-			}
-
-			if (options.sticky) {
-				transition(executeNavigation);
-			} else {
-				executeNavigation();
-			}
+			});
 		});
 
 		let history = useMemo(() => {
@@ -248,6 +276,14 @@ export default function Routes(config, options = {}) {
 			setAction(navigate);
 		});
 
+		// When the new view is rendered, we set pending to false
+		// We could also do this before resolving the transition promise, but
+		// that introduces a glitsch, as the pending is set to false and the rendering
+		// of the new view could still take a while
+		useLayoutEffect(() => {
+			setPending(false);
+		}, [render]);
+
 		// Update the real history after a component was rendered after a navigation
 		// We do this in a layouteffect because we need to rerender immediately because
 		// history.length could have changed
@@ -279,9 +315,24 @@ export default function Routes(config, options = {}) {
 		return (
 			<LocationContext.Provider value={locationContextValue}>
 				<HistoryContext.Provider value={historyContextValue}>
-					<PendingContext.Provider value={pending}>{render.elements}</PendingContext.Provider>
+					<PendingContext.Provider value={pending}>
+						{/* The suspender is necessary because we need to suspend relative to an already mounted Suspense component */}
+						{/* Otherwise the fallback of the newly mounted suspense boundary will trigger immediately */}
+						<Suspender resource={resource} />
+						{/* This suspense boundary is needed to allow non-sticky navigation to a component which does not render a suspense boundary itself */}
+						{/* Because of how react transitions work, it will do the transition in the background even thought the navigation is non-sticky */}
+						<Suspense key={render.path} fallback={fallback}>
+							{render.elements}
+						</Suspense>
+					</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);
 	};
+}
+
+function Suspender(props) {
+	useData(props.resource);
+
+	return null;
 }

@@ -7,96 +7,67 @@ async function sleep(ms) {
 	});
 }
 
-async function fetchData(params) {
-	await sleep(1000);
-	return params;
+async function sleep4000() {
+	await sleep(4000);
 }
 
-async function fetchData1(params, splat, search) {
-	await sleep(2000);
-	return { params, splat, search };
-}
-
-async function fetchData2(params, splat, search) {
-	await sleep(6000);
-	return { params, splat, search };
-}
-
-async function fetcher(parrams, splat, search) {
-	console.log('woto');
-}
-
-let Router = Routes(<Navigator data={fetcher} />);
-
-export default function Application() {
-	return <Router />;
-}
-
-function Navigator() {
-	let history = useHistory();
-
-	function onWootClick() {
-		history.navigate('/divisions/4238?week=02#ranking');
-	}
-
-	function onYeetClick() {
-		history.navigate('#matches');
-	}
-
-	return (
-		<div>
-			<button onClick={onWootClick}>woot</button>
-			<button onClick={onYeetClick}>yeet</button>
-		</div>
-	);
-}
-
-function Parent(props) {
+function Container(props) {
 	return (
 		<>
-			<h1>parent</h1>
+			<div style={{ display: 'flex', gap: '2rem' }}>
+				<Link to="/a">to a</Link>
+				<Link to="/b">to b</Link>
+				<Link to="/a" sticky={2000}>
+					to a with sticky
+				</Link>
+				<Link to="/b" sticky={2000}>
+					to b with sticky
+				</Link>
+			</div>
 			{props.children}
 		</>
 	);
 }
 
-function Child() {
-	return 'child';
+function Component1(props) {
+	return (
+		<Suspense fallback="woot">
+			<Component1Child />
+		</Suspense>
+	);
 }
 
-function Other() {
-	return 'other';
-}
-
-function A(props) {
-	let splat = useSplat();
-
-	console.log(splat);
-
-	return <span>A</span>;
-}
-
-function B(props) {
+function Component1Child(props) {
 	let data = useData();
-
-	return 'B';
-}
-
-function C(props) {
-	let data = useData();
-
-	return 'C';
-}
-
-function X(props) {
 	let pending = usePending();
 
 	return (
 		<>
-			<Link to="a" sticky={true}>
-				A
-			</Link>
-			{pending ? 'pending' : null}
+			component1
+			{pending ? ' x ' : null}
 		</>
 	);
+}
+
+function Component2(props) {
+	let data = useData();
+	let pending = usePending();
+
+	return (
+		<>
+			component2
+			{pending ? ' x ' : null}
+		</>
+	);
+}
+
+let Router = Routes(
+	<Container>
+		<Component1 path="a" data={sleep4000} />
+		<Component2 path="b" data={sleep4000} />
+	</Container>,
+);
+
+export default function Application() {
+	return <Router />;
 }
