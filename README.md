@@ -67,59 +67,37 @@ function ParentComponent(props) {
 }
 ```
 
-## Strict and loose matching
-
-### Strict
-
-Route elements that do not have any children routes, are matched very strictly to the current location.
-
-- The route element `<Component path="a" />` will NOT match with `/a/` or `/a/b`. It will match only with `/a`. 
-- The route element `<Component path="a/" />` will NOT match with `/a` or `/a/b`. It matches the trailing slash path `/a/`.
-- The route element `<Component path="a/*" />` will NOT match with `/a` or `/a/`. It matches paths like `/a/b`.
-
-So instead of matching all routes, `<Component path="*" />` will only match routes that have at least 1 segment!
-If you want to match all routes, you can omit the `path` prop.
-
-### Loose
-
-Route elements that have children routes, are matched more loosely to the current location.
-
-Here `<ParentComponent>` will render when the location is `/parent`, `/parent/` or `/parent/a` or even `/parent/a/b`.
+If you want to render different children in different locations of your component, or want to isolate a specific child, you can use the `id` prop on your children. The parent will have a child prop which is a dictionary of the children by id.
 
 ```javascript
 <ParentComponent path="parent">
-  <ChildComponent path="child" />
+  <ChildAComponent id="A" path="childA" />
+  <ChildBComponent id="B" path="childB" />
 </ParentComponent>
 ```
 
-Specifying the path property with a trailing slash, prevents the route from matching with the path `/parent`.
-So `<ParentComponent>` will render when the path is `/parent/` or `/parent/a` or even `/parent/a/b`.
-
 ```javascript
-<ParentComponent path="parent/">
-  <ChildComponent path="child" />
-</ParentComponent>
+function ParentComponent(props) {
+  return <div>
+    {props.child.A}
+  </div>
+}
 ```
 
-Specifying the path property with an asterisk, prevents the route from matching with the paths `/parent` and `/parent/`.
-It needs more segments to match. So it will match `/parent/a` and even `/parent/a/b`. 
+## Matching
+
+Route elements that have children that also specify a path, are matched loosely and will match when the url begins with the path descriptor.
+Route elements that do not have children that specify a path, are matched strictly and must match the whole url.
+You have to be very specific with trailing slashes and splats for these elements to match.
+
+Here is an example of elements matching different urls.
 
 ```javascript
-<ParentComponent path="parent/*">
-  <ChildComponent path="child" />
-</ParentComponent>
-```
-
-## Trailing slashes
-
-The `/` always matches the path with the trailing slash.
-The `.` always matches the path without the trailing slash.
-
-```javascript
-<Projects path="projects">
-  <ProjectsIndex path="." /> // will match only with /projects
-  <ProjectsIndex path="/" /> // will match only with /projects/
-</ParentComponent>
+<>
+  <Post path="posts" />
+  <PostWithSlash path="posts/" />
+  <PostWithSplat path="posts/*" />
+</>
 ```
 
 ## Params
@@ -260,12 +238,12 @@ You can use fragments `<>` to specify siblings at the highest level of your rout
 const Router = Routes(
   <>
     <About path="about" />
-    <div path="posts">
+    <Posts path="posts">
       <Post path=":id" />
       <PostEdit path=":id/edit" />
       <PostCreate path="create" />
       <PostOverview path="." />
-    </div>
+    </Posts>
   </>,
 );
 ```
@@ -305,7 +283,7 @@ const Router = Routes(
 )
 ```
 
-Do not forget that `<Redirect />` elements have no children, and thus are matched strictly to the location (see `strict` and `loose` matching earlier in the document).
+Do not forget that `<Redirect />` elements have no children, and thus are matched strictly to the whole pathname.
 So if you want to redirect a location, you may need to be very specific with all occurences that you want to be redirected.
 
 ```javascript
@@ -347,43 +325,13 @@ function Menu() {
 }
 ```
 
-## Adding props to a child route
-
-The child route is given as `props.children` to the parent route. If you however want to render the child route with some extra props,
-the `<Child />` component is there to help. It also renders the child route, but you can pass it the props you want.
-
-```javascript
-import Routes, { Child, useParams } from 'react-sprout';
-
-const Router = Routes(
-  <ParentComponent path="/user/:id">
-    <ChildComponent />
-  </ParentComponent>,
-);
-
-function ParentComponent(props) {
-  let { id } = useParams()
-
-  return (
-    <div>
-      <h1>Parent</h1>
-      <Child userId={id} />
-    </div>
-  );
-}
-
-function ChildComponent(props) {
-  // Here props.userId will be the :id param of the parent path
-}
-```
-
 ## Suspense
 
 If you want to make use of the suspense features in react and this router, you should
 
--   use the experimental version of react and react-dom by `npm install react@experimental react-dom@experimental`
--   wrap your application with a `<Suspense />` component in case the router suspends a transition to a new location
+-   use the experimental version of react and react-dom by `npm install react@alpha react-dom@alpha`
 -   start your render with the concurrent API of react-dom
+-   give a `fallback` prop to your router
 
 ```javascript
 import React from 'react'
@@ -397,9 +345,7 @@ const Router = Routes(
 )
 
 function Application() {
-  <Suspense fallback="loading...">
-    <Router />
-  </Suspense>
+    <Router fallback="loading..." />
 }
 
 ReactDom.createRoot(document.body).render(<Application >)
@@ -455,7 +401,7 @@ After your data fetch is complete, rendering will resume and the transition to t
 
 ## Sticky navigation
 
-When navigating to a new location with `navigate`, there is a `sticky` option to allow the new location to load in the background. The current location will be kept on the screen, until the data of the new location is loaded. When the new location is ready to be displayed, the navigation will happen and the url will be updated. When using sticky navigation, you should show an indicator to your users that the new route is loading in the background. The `usePending` hook returns whether a navigation is still pending in the background or not. The maximum amount of time that a navigation stays in the background, can be specified by a `timeoutMs` prop on the router element. The default is 4000ms. After this timeout, the new location will be shown even if it was not ready.
+When navigating to a new location with `navigate`, there is a `sticky` option to allow the new location to load in the background. The current location will be kept on the screen, until the data of the new location is loaded. When the new location is ready to be displayed, the navigation will happen and the url will be updated. When using sticky navigation, you should show an indicator to your users that the new route is loading in the background. The `usePending` hook returns whether a navigation is still pending in the background or not. The maximum amount of time that a navigation stays in the background, can be specified by giving a value for `sticky` in milliseconds. After this timeout, the new location will be shown even if it was not ready.
 
 ```javascript
 import React from 'react'
@@ -497,7 +443,19 @@ function Application() {
 ReactDom.createRoot(document.body).render(<Application />)
 ```
 
-## Router options
+This `usePending` hook can be customized with two properties on the Router element.
+There is a `delayPending` if you do not want to display the spinner immediately.
+When the spinner is shown after the delay, you may want to keep it on the screen for a little while with `minPending`.
+
+```javascript
+function Application() {
+  return <Suspense fallback="loading...">
+    <Router delayPending={250} minPending={500} />
+  </Suspense>
+}
+```
+
+## Routes options
 
 When creating the router, you could also pass an options object as the second argument. The following options can be used:
 
@@ -507,7 +465,10 @@ When creating the router, you could also pass an options object as the second ar
 ```javascript
 const Router = Routes(
   <Component path="a/static/path" />,
-  { location: 'application/a/static/path', base: 'application' }
+  { 
+    base: 'application',
+    location: 'application/a/static/path'
+  }
 );
 ```
 
@@ -552,62 +513,3 @@ This method is to be preferred over passing the data itself as a prop, because t
 
 Passing the resource instead allows the `ParentComponent` to not suspend, but let the `ChildComponent` do the suspending with `useData`. If there is a `<Suspense>` boundary between Parent and Child, it will be used when the child suspends. If the Parent did the suspending, that `<Suspense>` boundary could not have been activated.
 
-## Route config
-
-```
-If you want to know how react-sprout works, read on.
-If you are just interested in using it, you can skip this last part of the readme.
-```
-
-When you create the router with a React element, it converts the React element tree to a route config array.
-
-```javascript
-const Router = Routes(
-  <ParentComponent path="parent" data={fetchSomeData}>
-    <ChildComponent path="child" />
-  </ParentComponent>,
-);
-```
-
-Would convert the React element tree to
-
-```javascript
-[
-  {
-    path: 'parent',
-    data: fetchSomeData,
-    render: ParentComponent,
-    routes: [
-      {
-        path: 'child',
-        render: ChildComponent,
-      },
-    ],
-  },
-];
-```
-
-Every element becomes a route with 4 possible attributes:
-
--   path: the path to be used in matching
--   data: the async function to be used for data loading
--   render: the react component to render this route with
--   routes: the child routes of this route
-
-React-sprout also allows you to pass such a configuration object directly, instead of the React elements, for advanced use cases.
-
-```javascript
-const Router = Routes([
-  {
-    path: 'parent',
-    data: fetchSomeData,
-    render: ParentComponent,
-    routes: [
-      {
-        path: 'child',
-        render: ChildComponent,
-      },
-    ],
-  },
-]);
-```
