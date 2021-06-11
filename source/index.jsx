@@ -89,7 +89,13 @@ export default function Routes(config, options = {}) {
 	}
 
 	return function Router(props) {
-		let { sticky = 100, delayPending = 200, minPending = 500, fallback = null } = props;
+		let {
+			minTransitionTimeout = 50,
+			maxTransitionTimeout = 5000,
+			pendingAfter = 100,
+			pendingMinimum = 500,
+			fallback = null,
+		} = props;
 
 		let update = useForceUpdate();
 		let mounted = useMounted();
@@ -171,42 +177,74 @@ export default function Routes(config, options = {}) {
 						let rerender = createRender(routes, target, { base, elements: render.elements });
 						let rerenderPath = rerender.path ?? target;
 
-						let stickyValue = options.sticky ?? sticky;
-						if (stickyValue === true) {
-							stickyValue = sticky;
+						let transitionTimeout;
+						if (options.sticky === true) {
+							transitionTimeout = maxTransitionTimeout;
+						} else if (options.sticky == undefined) {
+							transitionTimeout = minTransitionTimeout;
+						} else if (options.sticky == false) {
+							transitionTimeout = 0;
+						} else {
+							transitionTimeout = options.sticky;
 						}
 
-						if (stickyValue !== false && stickyValue !== 0) {
-							let done = false;
-							let pending = false;
+						if (transitionTimeout === 0) {
+							console.log('transitioning immediately');
+						}
 
-							// Only set the pending indicator when pending is true when still sticky
-							if (stickyValue > delayPending || stickyValue === true) {
+						if (transitionTimeout > 0) {
+							let done = false;
+							let pendingPromise;
+
+							if (transitionTimeout > pendingAfter) {
+								console.log('setting spinner to fire within', pendingAfter);
 								setTimeout(function () {
 									if (done === false) {
-										pending = true;
+										pendingPromise = sleep(pendingMinimum);
 										setPending(true);
+										console.log('still busy, so activating spinner and setting pendingPromise');
+									} else {
+										console.log('done, so no need to activate spinner');
 									}
-								}, delayPending);
+								}, pendingAfter);
 							}
 
 							resource = createResource(
 								new Promise(resolve => {
-									async function transition() {
-										if (pending) {
-											await sleep(minPending);
-										}
+									let transitionTimer;
 
-										resolve();
+									async function transition() {
+										if (transitionTimer) {
+											clearTimeout(transitionTimer);
+											transitionTimer = undefined;
+
+											if (pendingPromise) await pendingPromise;
+
+											resolve();
+										}
+									}
+
+									// Schedule the transition if data is not yet ready
+									if (transitionTimeout !== Infinity) {
+										console.log('scheduling automated transition in', transitionTimeout);
+										transitionTimer = setTimeout(function () {
+											console.log('data is not yet ready, but transitioning anyway');
+											transition();
+										}, transitionTimeout);
 									}
 
 									// Start transition if all data is in
-									Promise.all(rerender.promises).then(transition);
-
-									// If sticky is true, do not use a timeout to wait indefinitely till all data has arrived
-									if (stickyValue !== true) {
-										setTimeout(transition, stickyValue);
-									}
+									Promise.all(rerender.promises).then(() => {
+										console.log('all data has arrived');
+										if (transitionTimer) {
+											console.log('starting the transition');
+											transition();
+										} else {
+											console.log(
+												'do nothing because transition was already fired because of timeout',
+											);
+										}
+									});
 								}),
 							);
 						}

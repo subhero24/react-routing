@@ -4,7 +4,9 @@ import pluginCommonJS from '@rollup/plugin-commonjs';
 import pluginNodeResolve from '@rollup/plugin-node-resolve';
 import pluginNodePolyfills from 'rollup-plugin-node-polyfills';
 
-export default [
+let development = process.env.NODE_ENV === 'development';
+
+let config = [
 	{
 		input: 'source/index.js',
 		output: {
@@ -21,11 +23,18 @@ export default [
 				// presets: ['@babel/preset-env'],
 				plugins: ['@babel/plugin-transform-react-jsx'],
 			}),
-			pluginTerser.terser({
-				mangle: true,
-				safari10: true,
-			}),
 		],
 		external: [/@babel\/runtime/, 'react'],
 	},
 ];
+
+if (development === false) {
+	config[0].plugins.push(
+		pluginTerser.terser({
+			mangle: true,
+			safari10: true,
+		}),
+	);
+}
+
+export default config;

@@ -6,12 +6,10 @@ import { Suspense } from 'react';
 
 function Root() {
 	return (
-		<Suspense fallback={'suspense'}>
+		<Suspense fallback="application fallback">
 			<Application />
 		</Suspense>
 	);
 }
-
-
 
 ReactDom.createRoot(document.getElementById('root')).render(<Root />);

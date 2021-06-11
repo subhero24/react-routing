@@ -17,10 +17,10 @@ function Container(props) {
 			<div style={{ display: 'flex', gap: '2rem' }}>
 				<Link to="/a">to a</Link>
 				<Link to="/b">to b</Link>
-				<Link to="/a" sticky={2000}>
+				<Link to="/a" sticky={true}>
 					to a with sticky
 				</Link>
-				<Link to="/b" sticky={2000}>
+				<Link to="/b" sticky={true}>
 					to b with sticky
 				</Link>
 			</div>
@@ -31,7 +31,7 @@ function Container(props) {
 
 function Component1(props) {
 	return (
-		<Suspense fallback="woot">
+		<Suspense fallback="fallback for component 1">
 			<Component1Child />
 		</Suspense>
 	);
@@ -69,5 +69,5 @@ let Router = Routes(
 );
 
 export default function Application() {
-	return <Router />;
+	return <Router maxTransitionTimeout={3500} pendingMinimum={2000} fallback="router fallback" />;
 }

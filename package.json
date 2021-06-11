@@ -14,7 +14,7 @@
 		"lint": "eslint source/**/*.*",
 		"test": "node scripts/test.mjs",
 		"build": "rollup -c rollup.config.js && cp source/index.d.ts build/index.d.ts",
-		"develop": "rollup -c rollup.config.js -w"
+		"develop": "NODE_ENV=development rollup -c rollup.config.js -w"
 	},
 	"keywords": [
 		"react",
