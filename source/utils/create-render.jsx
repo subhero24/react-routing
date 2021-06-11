@@ -60,9 +60,9 @@ export default function createRootRender(routes, rootPath, { base = '/', element
 	while (true) {
 		try {
 			let rootPath = path + search + hash;
-			let rootRender = createRender(routes, path, { base, elements, search });
+			let rootElement = createRender(routes, path, { base, elements, search });
 
-			return { path: rootPath, ...rootRender };
+			return { path: rootPath, elements: rootElement };
 		} catch (error) {
 			if (error instanceof RedirectError) {
 				// We update the path to the new location
@@ -100,7 +100,6 @@ function createRender(routes, path, context = {}) {
 	let matched = false;
 	let previous = null;
 	let elements = [];
-	let promises = [];
 
 	for (let route of routes) {
 		// Break if we encounter different path after having a match
@@ -158,10 +157,6 @@ function createRender(routes, path, context = {}) {
 					}
 				}
 
-				if (resource) {
-					promises.push(resource.promise);
-				}
-
 				let key = routes.indexOf(route);
 				let childrender;
 				if (route.children) {
@@ -171,8 +166,6 @@ function createRender(routes, path, context = {}) {
 						search,
 						elements: contextElement?.props.children,
 					});
-
-					promises.push(...childrender.promises);
 				}
 
 				// The key make sure that a different route element from the config is remounted
@@ -193,7 +186,7 @@ function createRender(routes, path, context = {}) {
 		previous = route.path;
 	}
 
-	return { elements, promises };
+	return elements;
 }
 
 function equalParams(paramsA, paramsB) {

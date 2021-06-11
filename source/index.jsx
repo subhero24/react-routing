@@ -13,6 +13,7 @@ import useEventListener from './hooks/use-event-listener.js';
 import useImmutableCallback from './hooks/use-immutable-callback.js';
 
 import sleep from './utils/sleep.js';
+import traverse from './utils/traverse.js';
 import createRender from './utils/create-render.jsx';
 import createRoutes from './utils/create-routes.js';
 import locationToPath from './utils/paths/location-to-path.js';
@@ -218,11 +219,22 @@ export default function Routes(config, options = {}) {
 											clearTimeout(transitionTimer);
 											transitionTimer = undefined;
 
+											// Wait for the pending spinner on the previous screen
 											if (pendingPromise) await pendingPromise;
+
+											// Extend the still suspended resources with the pendingMinimum
+											traverse(rerender.elements, function (element) {
+												let resource = element.props.resource;
+												if (resource?.status === 'busy') {
+													resource.promise = sleep(pendingMinimum).then(resource.promise);
+												}
+											});
 
 											resolve();
 										}
 									}
+
+									console.log(rerender);
 
 									// Schedule the transition if data is not yet ready
 									if (transitionTimeout !== Infinity) {
@@ -234,7 +246,15 @@ export default function Routes(config, options = {}) {
 									}
 
 									// Start transition if all data is in
-									Promise.all(rerender.promises).then(() => {
+									let promises = [];
+									traverse(rerender.elements, function (element) {
+										console.log(element);
+										if (element.resource) {
+											promises.push(element.resource.promise);
+										}
+									});
+
+									Promise.all(promises).then(() => {
 										console.log('all data has arrived');
 										if (transitionTimer) {
 											console.log('starting the transition');
@@ -316,7 +336,7 @@ export default function Routes(config, options = {}) {
 
 		// When the new view is rendered, we set pending to false
 		// We could also do this before resolving the transition promise, but
-		// that introduces a glitsch, as the pending is set to false and the rendering
+		// that introduces a glitch, as the pending is set to false and the rendering
 		// of the new view could still take a while
 		useLayoutEffect(() => {
 			setPending(false);
