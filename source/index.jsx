@@ -219,7 +219,16 @@ export default function Routes(config, options = {}) {
 											clearTimeout(transitionTimer);
 											transitionTimer = undefined;
 
+											// Wait for the pending spinner on the previous screen
 											if (pendingPromise) await pendingPromise;
+
+											// Extend the still suspended resources with the pendingMinimum
+											traverse(rerender.elements, function (element) {
+												let resource = element.props.resource;
+												if (resource?.status === 'busy') {
+													resource.promise = sleep(pendingMinimum).then(resource.promise);
+												}
+											});
 
 											resolve();
 										}
