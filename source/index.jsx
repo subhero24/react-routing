@@ -189,23 +189,18 @@ export default function Routes(config, options = {}) {
 							transitionTimeout = options.sticky;
 						}
 
-						if (transitionTimeout === 0) {
-							console.log('transitioning immediately');
-						}
-
 						if (transitionTimeout > 0) {
 							let done = false;
 							let pendingPromise;
 
 							if (transitionTimeout > pendingAfter) {
-								console.log('setting spinner to fire within', pendingAfter);
+								// Setting spinner the fire within "pendingAfter"
 								setTimeout(function () {
+									// Only set spinner when still busy
 									if (done === false) {
+										// Activating spinner and setting pendingPromise
 										pendingPromise = sleep(pendingMinimum);
 										setPending(true);
-										console.log('still busy, so activating spinner and setting pendingPromise');
-									} else {
-										console.log('done, so no need to activate spinner');
 									}
 								}, pendingAfter);
 							}
@@ -222,7 +217,7 @@ export default function Routes(config, options = {}) {
 											// Wait for the pending spinner on the previous screen
 											if (pendingPromise) await pendingPromise;
 
-											// Extend the still suspended resources with the pendingMinimum
+											// Extend the still suspended resources on the transitioned screen with the pendingMinimum
 											traverse(rerender.elements, function (element) {
 												let resource = element.props.resource;
 												if (resource?.status === 'busy') {
@@ -234,11 +229,10 @@ export default function Routes(config, options = {}) {
 										}
 									}
 
-									// Schedule the transition if data is not yet ready
+									// Scheduling automated transition in "transitionTimeout"
 									if (transitionTimeout !== Infinity) {
-										console.log('scheduling automated transition in', transitionTimeout);
 										transitionTimer = setTimeout(function () {
-											console.log('data is not yet ready, but transitioning anyway');
+											// Data is not ready yet, but transitioning anyway
 											transition();
 										}, transitionTimeout);
 									}
@@ -252,14 +246,10 @@ export default function Routes(config, options = {}) {
 
 									// Start transition if all data is in
 									Promise.all(promises).then(() => {
-										console.log('all data has arrived');
+										// All the data has arrived
+										// Transition if not already done so
 										if (transitionTimer) {
-											console.log('starting the transition');
 											transition();
-										} else {
-											console.log(
-												'do nothing because transition was already fired because of timeout',
-											);
 										}
 									});
 								}),
