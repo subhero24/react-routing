@@ -219,22 +219,11 @@ export default function Routes(config, options = {}) {
 											clearTimeout(transitionTimer);
 											transitionTimer = undefined;
 
-											// Wait for the pending spinner on the previous screen
 											if (pendingPromise) await pendingPromise;
-
-											// Extend the still suspended resources with the pendingMinimum
-											traverse(rerender.elements, function (element) {
-												let resource = element.props.resource;
-												if (resource?.status === 'busy') {
-													resource.promise = sleep(pendingMinimum).then(resource.promise);
-												}
-											});
 
 											resolve();
 										}
 									}
-
-									console.log(rerender);
 
 									// Schedule the transition if data is not yet ready
 									if (transitionTimeout !== Infinity) {
@@ -245,15 +234,14 @@ export default function Routes(config, options = {}) {
 										}, transitionTimeout);
 									}
 
-									// Start transition if all data is in
 									let promises = [];
 									traverse(rerender.elements, function (element) {
-										console.log(element);
-										if (element.resource) {
-											promises.push(element.resource.promise);
+										if (element.props.resource) {
+											promises.push(element.props.resource.promise);
 										}
 									});
 
+									// Start transition if all data is in
 									Promise.all(promises).then(() => {
 										console.log('all data has arrived');
 										if (transitionTimer) {
@@ -336,7 +324,7 @@ export default function Routes(config, options = {}) {
 
 		// When the new view is rendered, we set pending to false
 		// We could also do this before resolving the transition promise, but
-		// that introduces a glitch, as the pending is set to false and the rendering
+		// that introduces a glitsch, as the pending is set to false and the rendering
 		// of the new view could still take a while
 		useLayoutEffect(() => {
 			setPending(false);

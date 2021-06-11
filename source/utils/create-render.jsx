@@ -60,9 +60,9 @@ export default function createRootRender(routes, rootPath, { base = '/', element
 	while (true) {
 		try {
 			let rootPath = path + search + hash;
-			let rootElement = createRender(routes, path, { base, elements, search });
+			let rootRender = createRender(routes, path, { base, elements, search });
 
-			return { path: rootPath, elements: rootElement };
+			return { path: rootPath, elements: rootRender };
 		} catch (error) {
 			if (error instanceof RedirectError) {
 				// We update the path to the new location
@@ -177,7 +177,7 @@ function createRender(routes, path, context = {}) {
 				// We also pass the search and resource for data fetching.
 				elements.push(
 					<Route key={key} route={route} match={match} params={params} search={search} resource={resource}>
-						{childrender?.elements}
+						{childrender}
 					</Route>,
 				);
 			}
