@@ -4,33 +4,22 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useMemo, useState, useLayoutEffect, Suspense } from 'react';
+import { useRef, useMemo, useState, useLayoutEffect } from 'react';
 
-import useData from './hooks/use-data.js';
 import useMounted from './hooks/use-mounted.js';
 import useForceUpdate from './hooks/use-force-update.js';
 import useEventListener from './hooks/use-event-listener.js';
 import useImmutableCallback from './hooks/use-immutable-callback.js';
 
+import wait from './utils/wait.js';
 import sleep from './utils/sleep.js';
 import traverse from './utils/traverse.js';
 import createRender from './utils/create-render.jsx';
 import createRoutes from './utils/create-routes.js';
 import locationToPath from './utils/paths/location-to-path.js';
-import createResource from './utils/create-resource';
 
 const PUSH = 'PUSH';
 const REPLACE = 'REPLACE';
-
-// Mock startTransition to support React versions without startTransition
-let startTransition =
-	React.startTransition ??
-	function startTransition(execute) {
-		console.warn(
-			'React startTransition is not defined. Falling back to transitions without sticky navigation. Please use a version of React that supports transitions to do sticky navigations.',
-		);
-		execute();
-	};
 
 export default function Routes(config, options = {}) {
 	let { location, history, document, base = '/' } = options;
@@ -92,14 +81,14 @@ export default function Routes(config, options = {}) {
 	return function Router(props) {
 		let {
 			minTransitionTimeout = 50,
-			maxTransitionTimeout = 5000,
-			pendingAfter = 100,
+			maxTransitionTimeout = 4000,
+			pendingDelay = 100,
 			pendingMinimum = 500,
-			fallback = null,
 		} = props;
 
 		let update = useForceUpdate();
 		let mounted = useMounted();
+		let targets = useRef([]);
 		let [render, setRender] = useState(initialRender);
 		let [action, setAction] = useState({
 			type: REPLACE,
@@ -108,7 +97,6 @@ export default function Routes(config, options = {}) {
 			title: rootDocument?.title,
 		});
 		let [pending, setPending] = useState(false);
-		let [resource, setResource] = useState();
 
 		// Everything related to location object
 		let url = useMemo(() => new URL(action.path, rootLocation.origin), [action.path]);
@@ -162,109 +150,89 @@ export default function Routes(config, options = {}) {
 
 		// Everything related to the history object
 		let historyState = useImmutableCallback(() => action.state);
-		let historyNavigate = useImmutableCallback(function (path, options = {}) {
-			startTransition(function () {
-				let navigate = {
-					type: options.replace ? REPLACE : PUSH,
-					path: action.path,
-					state: options.state ?? action.state,
-					title: options.title ?? action.title,
-				};
+		let historyNavigate = useImmutableCallback(async function (path, options = {}) {
+			let navigate = {
+				type: options.replace ? REPLACE : PUSH,
+				path: action.path,
+				state: options.state ?? action.state,
+				title: options.title ?? action.title,
+			};
 
-				if (path != undefined) {
-					let target = Url.resolve(action.path, `${path}`);
-					if (target !== action.path) {
-						let resource;
-						let rerender = createRender(routes, target, { base, elements: render.elements });
-						let rerenderPath = rerender.path ?? target;
+			let target = path == undefined ? action.path : Url.resolve(action.path, `${path}`);
+			let transitioning = targets.current.includes(target);
 
-						let transitionTimeout;
-						if (options.sticky === true) {
-							transitionTimeout = maxTransitionTimeout;
-						} else if (options.sticky == undefined) {
-							transitionTimeout = minTransitionTimeout;
-						} else if (options.sticky == false) {
-							transitionTimeout = 0;
-						} else {
-							transitionTimeout = options.sticky;
-						}
+			// We keep an array of paths where we are transitioning to, so that we can skip
+			// transitions already in progress, and we can apply only the latest transition
+			targets.current.push(target);
 
-						if (transitionTimeout > 0) {
-							let done = false;
-							let pendingPromise;
+			if (target !== action.path) {
+				if (transitioning === false) {
+					let rerender = createRender(routes, target, { base, elements: render.elements });
 
-							if (transitionTimeout > pendingAfter) {
-								// Setting spinner the fire within "pendingAfter"
-								setTimeout(function () {
-									// Only set spinner when still busy
-									if (done === false) {
-										// Activating spinner and setting pendingPromise
-										pendingPromise = sleep(pendingMinimum);
-										setPending(true);
-									}
-								}, pendingAfter);
-							}
+					navigate.path = rerender.path;
 
-							resource = createResource(
-								new Promise(resolve => {
-									let transitionTimer;
+					let transitionTimeout;
+					if (options.sticky === true) {
+						transitionTimeout = maxTransitionTimeout;
+					} else if (options.sticky == undefined) {
+						transitionTimeout = minTransitionTimeout;
+					} else if (options.sticky == false) {
+						transitionTimeout = 0;
+					} else {
+						transitionTimeout = options.sticky;
+					}
 
-									async function transition() {
-										if (transitionTimer) {
-											clearTimeout(transitionTimer);
-											transitionTimer = undefined;
-
-											// Wait for the pending spinner on the previous screen
-											if (pendingPromise) await pendingPromise;
-
-											// Extend the still suspended resources on the transitioned screen with the pendingMinimum
-											traverse(rerender.elements, function (element) {
-												let resource = element.props.resource;
-												if (resource?.status === 'busy') {
-													resource.promise = sleep(pendingMinimum).then(resource.promise);
-												}
-											});
-
-											resolve();
-										}
-									}
-
-									// Scheduling automated transition in "transitionTimeout"
-									if (transitionTimeout !== Infinity) {
-										transitionTimer = setTimeout(function () {
-											// Data is not ready yet, but transitioning anyway
-											transition();
-										}, transitionTimeout);
-									}
-
-									let promises = [];
-									traverse(rerender.elements, function (element) {
-										if (element.props.resource) {
-											promises.push(element.props.resource.promise);
-										}
-									});
-
-									// Start transition if all data is in
-									Promise.all(promises).then(() => {
-										// All the data has arrived
-										// Transition if not already done so
-										if (transitionTimer) {
-											transition();
-										}
-									});
-								}),
-							);
-						}
-
+					if (transitionTimeout === 0) {
 						setRender(rerender);
-						setResource(resource);
+					} else {
+						let finished;
+						let pendingTimer;
+						let spinningDelay;
+						let transitionTimer;
 
-						navigate.path = rerenderPath;
+						wait(rerender.elements).then(transition);
+
+						if (transitionTimeout > pendingDelay) {
+							pendingTimer = setTimeout(function () {
+								if (!finished) {
+									setPending(true);
+									spinningDelay = sleep(pendingMinimum);
+								}
+							}, pendingDelay);
+						}
+
+						if (transitionTimeout !== Infinity) {
+							transitionTimer = setTimeout(transition, transitionTimeout);
+						}
+
+						async function transition() {
+							if (finished) return;
+
+							finished = true;
+							clearTimeout(pendingTimer);
+							clearTimeout(transitionTimer);
+
+							if (spinningDelay) await spinningDelay;
+
+							let currentTarget = targets.current[targets.current.length - 1];
+							if (currentTarget === target) {
+								targets.current = [];
+
+								traverse(rerender.elements, function (element) {
+									let resource = element.props.resource;
+									if (resource?.status === 'busy') {
+										resource.promise = sleep(pendingMinimum);
+									}
+								});
+
+								setRender(rerender);
+							}
+						}
 					}
 				}
+			}
 
-				setAction(navigate);
-			});
+			setAction(navigate);
 		});
 
 		let history = useMemo(() => {
@@ -360,24 +328,9 @@ export default function Routes(config, options = {}) {
 		return (
 			<LocationContext.Provider value={locationContextValue}>
 				<HistoryContext.Provider value={historyContextValue}>
-					<PendingContext.Provider value={pending}>
-						{/* The suspender is necessary because we need to suspend relative to an already mounted Suspense component */}
-						{/* Otherwise the fallback of the newly mounted suspense boundary will trigger immediately */}
-						<Suspender resource={resource} />
-						{/* This suspense boundary is needed to allow non-sticky navigation to a component which does not render a suspense boundary itself */}
-						{/* Because of how react transitions work, it will do the transition in the background even thought the navigation is non-sticky */}
-						<Suspense key={render.path} fallback={fallback}>
-							{render.elements}
-						</Suspense>
-					</PendingContext.Provider>
+					<PendingContext.Provider value={pending}>{render.elements}</PendingContext.Provider>
 				</HistoryContext.Provider>
 			</LocationContext.Provider>
 		);
 	};
-}
-
-function Suspender(props) {
-	useData(props.resource);
-
-	return null;
 }

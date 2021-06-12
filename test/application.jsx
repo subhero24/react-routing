@@ -1,4 +1,4 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useEffect } from 'react';
 import Routes, { useData, useSplat, useNavigate, Link, Redirect, useHistory, usePending } from '../build/index.mjs';
 
 async function sleep(ms) {
@@ -7,11 +7,15 @@ async function sleep(ms) {
 	});
 }
 
-async function sleep4000() {
-	await sleep(4000);
+async function sleep6000() {
+	await sleep(6000);
 }
 
 function Container(props) {
+	useEffect(() => {
+		console.log('mount');
+	}, []);
+
 	return (
 		<>
 			<div style={{ display: 'flex', gap: '2rem' }}>
@@ -63,8 +67,8 @@ function Component2(props) {
 
 let Router = Routes(
 	<Container>
-		<Component1 path="a" data={sleep4000} />
-		<Component2 path="b" data={sleep4000} />
+		<Component1 path="a" data={sleep6000} />
+		<Component2 path="b" data={sleep6000} />
 	</Container>,
 );
 
