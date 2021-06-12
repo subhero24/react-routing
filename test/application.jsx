@@ -7,8 +7,8 @@ async function sleep(ms) {
 	});
 }
 
-async function sleep6000() {
-	await sleep(6000);
+async function sleep3000() {
+	await sleep(3000);
 }
 
 function Container(props) {
@@ -21,10 +21,10 @@ function Container(props) {
 			<div style={{ display: 'flex', gap: '2rem' }}>
 				<Link to="/a">to a</Link>
 				<Link to="/b">to b</Link>
-				<Link to="/a" sticky={true}>
+				<Link to="/a" sticky={1500}>
 					to a with sticky
 				</Link>
-				<Link to="/b" sticky={true}>
+				<Link to="/b" sticky={1500}>
 					to b with sticky
 				</Link>
 			</div>
@@ -67,8 +67,8 @@ function Component2(props) {
 
 let Router = Routes(
 	<Container>
-		<Component1 path="a" data={sleep6000} />
-		<Component2 path="b" data={sleep6000} />
+		<Component1 path="a" data={sleep3000} />
+		<Component2 path="b" data={sleep3000} />
 	</Container>,
 );
 

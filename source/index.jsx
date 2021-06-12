@@ -79,16 +79,11 @@ export default function Routes(config, options = {}) {
 	}
 
 	return function Router(props) {
-		let {
-			minTransitionTimeout = 50,
-			maxTransitionTimeout = 4000,
-			pendingDelay = 100,
-			pendingMinimum = 500,
-		} = props;
+		let { minTransitionTimeout = 50, maxTransitionTimeout = 4000, minPending = 500, delayPending = 100 } = props;
 
 		let update = useForceUpdate();
 		let mounted = useMounted();
-		let targets = useRef([]);
+
 		let [render, setRender] = useState(initialRender);
 		let [action, setAction] = useState({
 			type: REPLACE,
@@ -96,6 +91,8 @@ export default function Routes(config, options = {}) {
 			state: rootHistory?.state,
 			title: rootDocument?.title,
 		});
+
+		let transition = useRef({ path: null, paths: [] });
 		let [pending, setPending] = useState(false);
 
 		// Everything related to location object
@@ -159,80 +156,78 @@ export default function Routes(config, options = {}) {
 			};
 
 			let target = path == undefined ? action.path : Url.resolve(action.path, `${path}`);
-			let transitioning = targets.current.includes(target);
+			if (target === action.path) {
+				setPending(false);
+				transition.current.path = null;
+			} else {
+				let rerender = createRender(routes, target, { base, elements: render.elements });
 
-			// We keep an array of paths where we are transitioning to, so that we can skip
-			// transitions already in progress, and we can apply only the latest transition
-			targets.current.push(target);
+				navigate.path = rerender.path;
 
-			if (target !== action.path) {
-				if (transitioning === false) {
-					let rerender = createRender(routes, target, { base, elements: render.elements });
+				let transitionTimeout;
+				if (options.sticky === true) {
+					transitionTimeout = maxTransitionTimeout;
+				} else if (options.sticky == undefined) {
+					transitionTimeout = minTransitionTimeout;
+				} else if (options.sticky == false) {
+					transitionTimeout = 0;
+				} else {
+					transitionTimeout = options.sticky;
+				}
 
-					navigate.path = rerender.path;
+				if (transitionTimeout === 0) {
+					setRender(rerender);
+					setAction(navigate);
+					transition.current.path = null;
+				} else {
+					let transitioning = transition.current.paths.indexOf(target) !== -1;
+					if (transitioning === false) {
+						transition.current.path = target;
+						transition.current.paths.push(target);
 
-					let transitionTimeout;
-					if (options.sticky === true) {
-						transitionTimeout = maxTransitionTimeout;
-					} else if (options.sticky == undefined) {
-						transitionTimeout = minTransitionTimeout;
-					} else if (options.sticky == false) {
-						transitionTimeout = 0;
-					} else {
-						transitionTimeout = options.sticky;
-					}
+						let delay;
+						let finished = false;
 
-					if (transitionTimeout === 0) {
-						setRender(rerender);
-					} else {
-						let finished;
-						let pendingTimer;
-						let spinningDelay;
-						let transitionTimer;
-
-						wait(rerender.elements).then(transition);
-
-						if (transitionTimeout > pendingDelay) {
-							pendingTimer = setTimeout(function () {
-								if (!finished) {
-									setPending(true);
-									spinningDelay = sleep(pendingMinimum);
-								}
-							}, pendingDelay);
+						if (transitionTimeout > delayPending) {
+							sleep(delayPending).then(spin);
 						}
 
-						if (transitionTimeout !== Infinity) {
-							transitionTimer = setTimeout(transition, transitionTimeout);
+						let transitionByData = wait(rerender.elements);
+						let transitionByTimeout = sleep(transitionTimeout);
+
+						Promise.race([transitionByData, transitionByTimeout]).then(execute);
+
+						function spin() {
+							if (finished === false) {
+								setPending(true);
+								delay = sleep(minPending);
+							}
 						}
 
-						async function transition() {
-							if (finished) return;
-
+						async function execute() {
 							finished = true;
-							clearTimeout(pendingTimer);
-							clearTimeout(transitionTimer);
 
-							if (spinningDelay) await spinningDelay;
-
-							let currentTarget = targets.current[targets.current.length - 1];
-							if (currentTarget === target) {
-								targets.current = [];
-
+							if (delay) await delay;
+							if (target === transition.current.path) {
 								traverse(rerender.elements, function (element) {
 									let resource = element.props.resource;
 									if (resource?.status === 'busy') {
-										resource.promise = sleep(pendingMinimum);
+										resource.promise = sleep(minPending);
 									}
 								});
 
 								setRender(rerender);
+								setAction(navigate);
+								setPending(false);
+
+								transition.current.path = null;
 							}
+
+							transition.current.paths = transition.current.paths.filter(path => path !== target);
 						}
 					}
 				}
 			}
-
-			setAction(navigate);
 		});
 
 		let history = useMemo(() => {
@@ -288,14 +283,6 @@ export default function Routes(config, options = {}) {
 
 			setAction(navigate);
 		});
-
-		// When the new view is rendered, we set pending to false
-		// We could also do this before resolving the transition promise, but
-		// that introduces a glitsch, as the pending is set to false and the rendering
-		// of the new view could still take a while
-		useLayoutEffect(() => {
-			setPending(false);
-		}, [render]);
 
 		// Update the real history after a component was rendered after a navigation
 		// We do this in a layouteffect because we need to rerender immediately because

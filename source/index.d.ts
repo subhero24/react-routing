@@ -6,9 +6,8 @@ export default function Routes(
 ): (props: {
 	minTransitionTimeout?: number;
 	maxTransitionTimout?: number;
-	pendingAfter?: number;
-	pendingMinimum?: number;
-	fallback?: ReactElement;
+	minPending?: number;
+	delayPending?: number;
 }) => ReactElement;
 
 export function useData(resource?: { status: string; result: any }): any;
