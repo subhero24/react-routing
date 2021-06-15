@@ -65,13 +65,41 @@ function Component2(props) {
 	);
 }
 
+function Child1() {
+	return 'child1';
+}
+
+function Child2() {
+	return 'child1';
+}
+
+function Parent(props) {
+	return (
+		<>
+			<h1>parent</h1>
+			{props.children}
+		</>
+	);
+}
+
+function SubParent(props) {
+	return (
+		<>
+			<h2>subparent</h2>
+			{props.children}
+		</>
+	);
+}
+
 let Router = Routes(
-	<Container>
-		<Component1 path="a" data={sleep3000} />
-		<Component2 path="b" data={sleep3000} />
-	</Container>,
+	<Parent path="a/:x">
+		<Child1 path="b/:y" />
+		<SubParent>
+			<Child2 path="c" />
+		</SubParent>
+	</Parent>,
 );
 
 export default function Application() {
-	return <Router maxTransitionTimeout={3500} pendingMinimum={2000} fallback="router fallback" />;
+	return <Router />;
 }

@@ -1,4 +1,4 @@
-import traverse from './traverse.js';
+import traverse from '../traverse.js';
 
 export default function wait(elements) {
 	let promises = [];

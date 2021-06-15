@@ -11,8 +11,9 @@ import useForceUpdate from './hooks/use-force-update.js';
 import useEventListener from './hooks/use-event-listener.js';
 import useImmutableCallback from './hooks/use-immutable-callback.js';
 
-import wait from './utils/wait.js';
-import sleep from './utils/sleep.js';
+import wait from './utils/promise/wait.js';
+import sleep from './utils/promise/sleep.js';
+import extend from './utils/promise/extend.js';
 import traverse from './utils/traverse.js';
 import createRender from './utils/create-render.jsx';
 import createRoutes from './utils/create-routes.js';
@@ -74,17 +75,18 @@ export default function Routes(config, options = {}) {
 	let path = locationToPath(rootLocation);
 	let routes = createRoutes(config);
 
-	function initialRender() {
-		return createRender(routes, path, { base });
-	}
-
 	return function Router(props) {
 		let { minTransitionTimeout = 50, maxTransitionTimeout = 4000, minPending = 500, delayPending = 100 } = props;
 
 		let update = useForceUpdate();
 		let mounted = useMounted();
 
-		let [render, setRender] = useState(initialRender);
+		let [render, setRender] = useState(() => {
+			let render = createRender(routes, path, { base });
+			extend(render.elements, minPending);
+			return render;
+		});
+
 		let [action, setAction] = useState({
 			type: REPLACE,
 			path: render.path,
@@ -99,7 +101,9 @@ export default function Routes(config, options = {}) {
 		let url = useMemo(() => new URL(action.path, rootLocation.origin), [action.path]);
 		let locationUrl = useImmutableCallback(() => url);
 		let locationReload = useImmutableCallback(() => {
-			setRender(createRender(routes, action.path, { base }));
+			let render = createRender(routes, action.path, { base });
+			extend(render.elements, minPending);
+			setRender(render);
 		});
 
 		let location = useMemo(() => {
@@ -176,6 +180,7 @@ export default function Routes(config, options = {}) {
 				}
 
 				if (transitionTimeout === 0) {
+					extend(rerender.elements, minPending);
 					setRender(rerender);
 					setAction(navigate);
 					transition.current.path = null;
@@ -209,12 +214,7 @@ export default function Routes(config, options = {}) {
 
 							if (delay) await delay;
 							if (target === transition.current.path) {
-								traverse(rerender.elements, function (element) {
-									let resource = element.props.resource;
-									if (resource?.status === 'busy') {
-										resource.promise = sleep(minPending);
-									}
-								});
+								extend(rerender.elements, minPending);
 
 								setRender(rerender);
 								setAction(navigate);
@@ -277,6 +277,15 @@ export default function Routes(config, options = {}) {
 					navigate.type = REPLACE;
 					navigate.path = rerender.path;
 				}
+
+				extend(rerender.elements, minPending);
+
+				traverse(rerender.elements, function (element) {
+					let resource = element.props.resource;
+					if (resource?.status === 'busy') {
+						resource.promise = sleep(minPending).then(resource.promise);
+					}
+				});
 
 				setRender(rerender);
 			}
