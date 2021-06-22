@@ -479,4 +479,21 @@ test('Should redirect to the correct path', function () {
 	}
 });
 
+test('Should not render the parent that has no child matches', function () {
+	let Router = Routes(
+		<>
+			<Parent path=":a">
+				<Child path="b" />
+			</Parent>
+			<Other path="*/" />
+		</>,
+		{ location: '/a/b/' },
+	);
+
+	let element = Render.create(<Router />).toJSON();
+	if (element !== 'other') {
+		throw new Error('Did not render the correct element');
+	}
+});
+
 test.run();

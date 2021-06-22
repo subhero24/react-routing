@@ -70,7 +70,7 @@ function Child1() {
 }
 
 function Child2() {
-	return 'child1';
+	return 'child2';
 }
 
 function Parent(props) {
@@ -92,12 +92,12 @@ function SubParent(props) {
 }
 
 let Router = Routes(
-	<Parent path="a/:x">
-		<Child1 path="b/:y" />
-		<SubParent>
-			<Child2 path="c" />
-		</SubParent>
-	</Parent>,
+	<>
+		<Parent path=":a">
+			<Child1 path="b" />
+		</Parent>
+		<Child2 path="*/" />
+	</>,
 );
 
 export default function Application() {

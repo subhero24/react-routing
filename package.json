@@ -13,7 +13,8 @@
 	"scripts": {
 		"lint": "eslint source/**/*.*",
 		"test": "node scripts/test.mjs",
-		"build": "rollup -c rollup.config.js && cp source/index.d.ts build/index.d.ts",
+		"debug": "vite --host --force",
+		"build": "rollup -c rollup.config.js && cp source/index.d.ts build/index.d.ts && npm run test",
 		"develop": "NODE_ENV=development rollup -c rollup.config.js -w"
 	},
 	"keywords": [

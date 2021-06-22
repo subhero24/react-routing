@@ -116,8 +116,6 @@ function createRender(routes, path, context = {}) {
 
 		if (match) {
 			if (route.strict === false || match.strict === true) {
-				matched = true;
-
 				let splat = match.splat;
 				let search = context.search;
 				let params = { ...context.params, ...match.params };
@@ -129,6 +127,20 @@ function createRender(routes, path, context = {}) {
 				}
 
 				let contextElement = context.elements.find(e => e.props.route === route);
+
+				let childrender;
+				if (route.children) {
+					childrender = createRender(route.children, match.path, {
+						base: match.base,
+						params,
+						search,
+						elements: contextElement?.props.children,
+					});
+				}
+
+				if (route.children && childrender.length === 0) continue;
+
+				matched = true;
 
 				// Recover the data resource of the previously rendered route. Try to reuse the same resource.
 				// Prevent the same data to be fetched when the component is already mounted, by checking the previous rendered  params, splat and search
@@ -157,20 +169,9 @@ function createRender(routes, path, context = {}) {
 					}
 				}
 
-				let key = routes.indexOf(route);
-				let childrender;
-				if (route.children) {
-					childrender = createRender(route.children, match.path, {
-						base: match.base,
-						params,
-						search,
-						elements: contextElement?.props.children,
-					});
-				}
-
-				// The key make sure that a different route element from the config is remounted
-				// We pass the route, because we need the type to render the component
-				// and the id of the route to render the parent
+				let key = routes.indexOf(route) + match.base;
+				// The key make sure that the route is remounted when the path has changed
+				// We pass the route, because we need the type to render the component and the id of the route to render the parent
 				// We pass the match because we need the older splat to compare with the new splat to see if we should be fetching again
 				// We pass the params because the match params are not enough to compare for data fetching, as these are only the
 				// params of the elements' path. The data fetching function could also need params from a parent element.

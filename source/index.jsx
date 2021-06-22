@@ -4,7 +4,7 @@ import PendingContext from './contexts/pending';
 import HistoryContext from './contexts/history';
 import LocationContext from './contexts/location';
 
-import { useRef, useMemo, useState, useLayoutEffect } from 'react';
+import { useRef, useMemo, useState, useLayoutEffect, Fragment } from 'react';
 
 import useMounted from './hooks/use-mounted.js';
 import useForceUpdate from './hooks/use-force-update.js';
@@ -161,6 +161,7 @@ export default function Routes(config, options = {}) {
 
 			let target = path == undefined ? action.path : Url.resolve(action.path, `${path}`);
 			if (target === action.path) {
+				setAction(navigate);
 				setPending(false);
 				transition.current.path = null;
 			} else {
