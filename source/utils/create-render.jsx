@@ -21,13 +21,15 @@ function Route(props) {
 
 	let parentResource = useResource();
 
-	let childIds;
+	let childrenByIds;
 	if (children) {
-		childIds = {};
 		for (let child of children) {
 			if (child.props.route.id == undefined) continue;
 
-			childIds[child.props.route.id] = child;
+			if (childrenByIds == undefined) {
+				childrenByIds = {}
+			}
+			childrenByIds[child.props.route.id] = child;
 		}
 	}
 
@@ -35,7 +37,7 @@ function Route(props) {
 		<ResourceContext.Provider value={resource ?? parentResource}>
 			<ParamsContext.Provider value={params}>
 				<SplatContext.Provider value={match.splat}>
-					<RenderComponent child={childIds}>{children}</RenderComponent>
+					<RenderComponent child={childrenByIds}>{children}</RenderComponent>
 				</SplatContext.Provider>
 			</ParamsContext.Provider>
 		</ResourceContext.Provider>

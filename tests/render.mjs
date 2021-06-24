@@ -496,4 +496,46 @@ test('Should not render the parent that has no child matches', function () {
 	}
 });
 
+test('Should render component with correct props.child', function () {
+	function Parent(props) {
+		return props.child.X
+	}
+
+	let Router = Routes(
+		<>
+			<Parent path="a">
+				<Child id="X" />
+			</Parent>
+		</>,
+		{ location: '/a' },
+	);
+
+	let element = Render.create(<Router />).toJSON()
+	if (element !== 'child') {
+		throw new Error('Did not pass the Child element with the correct id');
+	}
+});
+
+test('Should render component with correct props.child', function () {
+	function Parent(props) {
+		return props.child ? 'object' : 'undefined'
+	}
+
+	let Router = Routes(
+		<>
+			<Parent path="a">
+				<Child id="X" />
+				<Child path="b" />
+			</Parent>
+		</>,
+		{ location: '/a/b' },
+	);
+
+	let element = Render.create(<Router />).toJSON()
+	if (element !== 'undefined') {
+		throw new Error('Did pass the props.child as an object while no children with ids were rendered');
+	}
+});
+
+
 test.run();
