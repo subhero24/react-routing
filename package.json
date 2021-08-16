@@ -45,8 +45,8 @@
 		"uvu": "^0.5.1",
 		"vite": "^2.3.5"
 	},
-	"dependencies": {
-		"react": "^18.0.0-alpha-aecb3b6d1",
-		"react-dom": "^18.0.0-alpha-aecb3b6d1"
+	"peerDependencies": {
+		"react": "^18.0.0-alpha-bc4e75112-20210815",
+		"react-dom": "^18.0.0-alpha-bc4e75112-20210815"
 	}
 }
