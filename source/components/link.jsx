@@ -11,7 +11,7 @@ export default forwardRef(function Link(props, ref) {
 	let location = useLocation();
 	let navigate = useNavigate();
 
-	let target = Url.resolve(location.pathname, `${to ?? href}`);
+	let target = Url.resolve(location.pathname, `${to ?? href ?? '#'}`);
 
 	function handleClick(event) {
 		if (onClick) onClick(event);
